@@ -1,0 +1,75 @@
+group 'me.etki'
+version '0.1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    testInfrastructure {
+        java {
+            srcDir 'src/test-infrastructure/test'
+        }
+    }
+}
+
+ext {
+    asyncHttpClientVersion = '2.+'
+    logbackVersion = '1.1+'
+    jacksonVersion = '2.7+'
+    junitVersion = '4.1+'
+    junitParamsVersion = '1.+'
+    guavaVersion = '19.+'
+    mockitoVersion = '1.10+'
+}
+
+dependencies {
+
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
+
+    compile group: 'org.asynchttpclient', name: 'async-http-client', version: asyncHttpClientVersion
+
+    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'pl.pragmatists', name: 'JUnitParams', version: junitParamsVersion
+    testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+}
+
+def testTypeStack = []
+
+['unit', 'functional', 'system', 'integration', 'stress'].each { testType ->
+    sourceSets.create("${testType}Test") {
+        java {
+            srcDir 'src/' + testType + '-test/java'
+        }
+        compileClasspath += sourceSets.main.runtimeClasspath
+        compileClasspath += sourceSets.test.runtimeClasspath
+        compileClasspath += sourceSets.testInfrastructure.runtimeClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.testInfrastructure.runtimeClasspath
+    }
+
+    tasks.create([name: testType + 'Test', type: Test], {
+        shouldRunAfter testTypeStack.collect { name -> name + 'Test' }
+        testClassesDir = sourceSets."${testType}Test".output.classesDir
+        classpath = sourceSets."${testType}Test".runtimeClasspath
+    })
+
+    testTypeStack.add(testType)
+}
+
+task acceptanceTest(dependsOn: [systemTest, integrationTest]) {
+    shouldRunAfter test
+}
+tasks.test.dependsOn(unitTest, functionalTest)
+tasks.stressTest.shouldRunAfter acceptanceTest
