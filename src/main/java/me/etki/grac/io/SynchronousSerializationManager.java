@@ -6,6 +6,7 @@ import me.etki.grac.utility.TypeSpec;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,4 +23,10 @@ public interface SynchronousSerializationManager {
             TypeSpec expectedType,
             List<TypeSpec> fallbackTypes)
             throws IOException, SerializationException;
+
+    default <T> DeserializationResult<T> deserialize(InputStream stream, MediaType mimeType, TypeSpec expectedType)
+            throws IOException, SerializationException {
+
+        return deserialize(stream, mimeType, expectedType, Collections.emptyList());
+    }
 }

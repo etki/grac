@@ -1,5 +1,6 @@
 package me.etki.grac;
 
+import me.etki.grac.common.Action;
 import me.etki.grac.utility.TypeSpec;
 
 import java.util.concurrent.CompletableFuture;

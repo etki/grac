@@ -1,22 +1,40 @@
 package me.etki.grac;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.net.MediaType;
-import me.etki.grac.common.ServerAddressProvider;
+import me.etki.grac.application.ApplicationClient;
+import me.etki.grac.application.ApplicationLevelInterceptor;
+import me.etki.grac.common.SharedDefaults;
+import me.etki.grac.concurrent.BasicCompletableFutureFactory;
+import me.etki.grac.concurrent.CompletableFutureFactory;
+import me.etki.grac.concurrent.DefaultDelayService;
+import me.etki.grac.concurrent.DefaultScheduledExecutor;
+import me.etki.grac.concurrent.DefaultTimeoutService;
+import me.etki.grac.concurrent.DelayService;
 import me.etki.grac.concurrent.ScheduledExecutor;
-import me.etki.grac.concurrent.ScheduledHelper;
+import me.etki.grac.concurrent.TimeoutService;
 import me.etki.grac.io.DefaultSerializationManager;
 import me.etki.grac.io.Serializer;
+import me.etki.grac.io.SynchronousSerializationManager;
+import me.etki.grac.policy.LoadBalancingPolicy;
 import me.etki.grac.policy.RetryPolicy;
 import me.etki.grac.transport.DefaultTransportManager;
-import me.etki.grac.transport.LoadBalancingPolicy;
-import me.etki.grac.transport.ServerRegistry;
 import me.etki.grac.transport.Transport;
 import me.etki.grac.transport.TransportInterceptor;
+import me.etki.grac.transport.TransportManager;
 import me.etki.grac.transport.TransportRegistry;
+import me.etki.grac.transport.TransportRequestExecutor;
+import me.etki.grac.transport.server.DefaultServerRegistry;
+import me.etki.grac.transport.server.ServerProvider;
+import me.etki.grac.transport.server.ServerRegistry;
+import me.etki.grac.utility.StaticValidator;
 import me.etki.grac.utility.TypeSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
@@ -30,24 +48,26 @@ import java.util.stream.StreamSupport;
  */
 public class ClientBuilder {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientBuilder.class);
+
     private List<Supplier<Serializer>> serializers = new ArrayList<>();
     private List<Supplier<Transport>> transports = new ArrayList<>();
-    private List<Supplier<Interceptor>> interceptors = new ArrayList<>();
+    private List<Supplier<ApplicationLevelInterceptor>> interceptors = new ArrayList<>();
     private List<Supplier<TransportInterceptor>> transportInterceptors = new ArrayList<>();
-    private Supplier<ScheduledExecutorService> scheduler = SharedDefaults::getDefaultScheduler;
+    private Supplier<ScheduledExecutor> scheduler = SharedDefaults::getDefaultScheduler;
     private Supplier<Executor> responseProcessingExecutor = SharedDefaults::getDefaultExecutor;
-    private ServerAddressProvider serverAddressProvider;
+    private ServerProvider serverProvider;
     private RetryPolicy retryPolicy = SharedDefaults.DEFAULT_RETRY_POLICY;
     private LoadBalancingPolicy loadBalancingPolicy = SharedDefaults.DEFAULT_LOAD_BALANCING_POLICY;
     private MediaType defaultSerializationType = SharedDefaults.JSON_MIME_TYPE;
-    private List<MediaType> defaultAcceptedTypes = new ArrayList<>();
-    private List<TypeSpec> fallbackTypes = new ArrayList<>();
+    private List<MediaType> acceptedMimeTypes = new ArrayList<>();
+    private List<TypeSpec> fallbackObjectTypes = new ArrayList<>();
     private List<String> acceptedLocales = new ArrayList<>();
     private boolean throwOnClientError = true;
     private boolean throwOnServerError = true;
     private boolean throwOnInvalidResponsePayloadType = true;
     private long defaultTimeout = SharedDefaults.DEFAULT_REQUEST_TIMEOUT;
-    private String clientIdentifier;
+    private String clientIdentifier = SharedDefaults.DEFAULT_CLIENT_IDENTIFIER;
 
     public ClientBuilder() {
         withDefaults();
@@ -109,23 +129,23 @@ public class ClientBuilder {
         return this;
     }
 
-    public ClientBuilder withInterceptor(Interceptor interceptor) {
+    public ClientBuilder withInterceptor(ApplicationLevelInterceptor interceptor) {
         return withInterceptor(() -> interceptor);
     }
 
-    public ClientBuilder withInterceptor(Supplier<Interceptor> interceptor) {
+    public ClientBuilder withInterceptor(Supplier<ApplicationLevelInterceptor> interceptor) {
         interceptors.add(interceptor);
         return this;
     }
 
-    public ClientBuilder withInterceptors(Iterable<Interceptor> interceptors) {
+    public ClientBuilder withInterceptors(Iterable<ApplicationLevelInterceptor> interceptors) {
         interceptors.forEach(this::withInterceptor);
         return this;
     }
 
-    public ClientBuilder setInterceptors(Iterable<Interceptor> interceptors) {
+    public ClientBuilder setInterceptors(Iterable<ApplicationLevelInterceptor> interceptors) {
         this.interceptors = StreamSupport.stream(interceptors.spliterator(), false)
-                .map(interceptor -> (Supplier<Interceptor>) () -> interceptor)
+                .map(interceptor -> (Supplier<ApplicationLevelInterceptor>) () -> interceptor)
                 .collect(Collectors.toList());
         return this;
     }
@@ -162,11 +182,19 @@ public class ClientBuilder {
         return this;
     }
 
-    public ClientBuilder withScheduler(ScheduledExecutorService scheduler) {
+    public ClientBuilder withSchedulerService(ScheduledExecutorService scheduler) {
+        return withSchedulerService(() -> scheduler);
+    }
+
+    public ClientBuilder withSchedulerService(Supplier<ScheduledExecutorService> scheduler) {
+        return withScheduler(() -> new DefaultScheduledExecutor(scheduler.get()));
+    }
+
+    public ClientBuilder withScheduler(ScheduledExecutor scheduler) {
         return withScheduler(() -> scheduler);
     }
 
-    public ClientBuilder withScheduler(Supplier<ScheduledExecutorService> scheduler) {
+    public ClientBuilder withScheduler(Supplier<ScheduledExecutor> scheduler) {
         this.scheduler = scheduler;
         return this;
     }
@@ -185,23 +213,23 @@ public class ClientBuilder {
         return this;
     }
 
-    public ClientBuilder withServiceAddressProvider(ServerAddressProvider provider) {
-        serverAddressProvider = provider;
+    public ClientBuilder withServiceAddressProvider(ServerProvider provider) {
+        serverProvider = provider;
         return this;
     }
 
     public ClientBuilder withDefaultAcceptedType(MediaType acceptedType) {
-        defaultAcceptedTypes.add(acceptedType);
+        acceptedMimeTypes.add(acceptedType);
         return this;
     }
 
     public ClientBuilder withDefaultAcceptedTypes(Iterable<MediaType> acceptedTypes) {
-        acceptedTypes.forEach(defaultAcceptedTypes::add);
+        acceptedTypes.forEach(this.acceptedMimeTypes::add);
         return this;
     }
 
     public ClientBuilder withoutDefaultAcceptedTypes() {
-        defaultAcceptedTypes = new ArrayList<>();
+        acceptedMimeTypes = new ArrayList<>();
         return this;
     }
 
@@ -211,26 +239,26 @@ public class ClientBuilder {
     }
     
     public ClientBuilder withFallbackType(TypeSpec type) {
-        fallbackTypes.add(type);
+        fallbackObjectTypes.add(type);
         return this;
     }
     
     public ClientBuilder withFallbackTypes(Iterable<TypeSpec> types) {
         types.forEach(type -> {
-            if (!fallbackTypes.contains(type)) {
-                fallbackTypes.add(type);
+            if (!fallbackObjectTypes.contains(type)) {
+                fallbackObjectTypes.add(type);
             }
         });
         return this;
     }
     
-    public ClientBuilder setFallbackTypes(Iterable<TypeSpec> types) {
-        fallbackTypes = StreamSupport.stream(types.spliterator(), false).collect(Collectors.toList());
+    public ClientBuilder setFallbackObjectTypes(Iterable<TypeSpec> types) {
+        fallbackObjectTypes = StreamSupport.stream(types.spliterator(), false).collect(Collectors.toList());
         return this;
     }
     
     public ClientBuilder withoutFallbackTypes() {
-        fallbackTypes = new ArrayList<>();
+        fallbackObjectTypes = new ArrayList<>();
         return this;
     }
 
@@ -280,7 +308,7 @@ public class ClientBuilder {
     }
 
     public ClientBuilder withDefaultTimeout(long defaultTimeout) {
-        if (defaultTimeout > 1) {
+        if (defaultTimeout < 1) {
             throw new IllegalArgumentException("Timeout can't be less than 1");
         }
         this.defaultTimeout = defaultTimeout;
@@ -288,36 +316,131 @@ public class ClientBuilder {
     }
 
     public Client build() {
-        List<Transport> transports = this.transports.stream().map(Supplier::get).collect(Collectors.toList());
-        List<Serializer> serializers = this.serializers.stream().map(Supplier::get).collect(Collectors.toList());
-        List<Interceptor> interceptors = this.interceptors.stream().map(Supplier::get).collect(Collectors.toList());
-        ScheduledExecutorService scheduledExecutorService = this.scheduler.get();
-        ScheduledExecutor scheduledExecutor = new ScheduledExecutor(scheduledExecutorService);
-        ScheduledHelper scheduler = new ScheduledHelper(scheduledExecutor);
-        // todo check invariants
+        LOGGER.debug("Building client");
+        Stopwatch timer = Stopwatch.createStarted();
+        // poor man's DI and validation
+        // todo make sure options are calculated before real work - and don't forget JMM is watching you
+        Client client = new DefaultClient(constructApplicationClient(), calculateRequestOptions(),
+                calculateClientOptions());
+        LOGGER.debug("Built generic rest api client in {}", timer);
+        return client;
+    }
 
-        TransportRegistry transportRegistry = new TransportRegistry(transports);
-        ServerRegistry servers = new ServerRegistry(serverAddressProvider, transportRegistry, loadBalancingPolicy);
-        DefaultTransportManager transportManager = new DefaultTransportManager(transportRegistry, servers, scheduler);
-        DefaultSerializationManager serializationManager
-                = new DefaultSerializationManager(serializers);
-        RequestOptions defaultRequestOptions = new RequestOptions()
-                .setRetryPolicy(retryPolicy)
-                .setSerializationType(defaultSerializationType)
-                .setAcceptedLocales(acceptedLocales)
-                .setAcceptedTypes(defaultAcceptedTypes)
-                .setFallbackTypes(fallbackTypes)
-                .setTimeout(defaultTimeout);
-        ResponseProcessingOptions responseProcessingOptions = new ResponseProcessingOptions()
+    private ClientOptions calculateClientOptions() {
+        return new ClientOptions()
                 .setThrowOnClientError(throwOnClientError)
                 .setThrowOnServerError(throwOnServerError)
                 .setThrowOnInvalidResponsePayloadType(throwOnInvalidResponsePayloadType);
+    }
 
-        RequestResponseProcessor processor = new RequestResponseProcessor(interceptors, responseProcessingOptions);
+    private RequestOptions calculateRequestOptions() {
+        StaticValidator.requireNonNull(defaultTimeout, "Default timeout not set");
+        StaticValidator.requireNonNull(retryPolicy, "Default retry policy not set");
+        StaticValidator.requireNonNull(defaultSerializationType, "Default serialization type not set");
+        List<String> acceptedLocales = Optional.ofNullable(this.acceptedLocales).orElseGet(ArrayList::new);
+        List<MediaType> acceptedMimeTypes = Optional.ofNullable(this.acceptedMimeTypes).orElseGet(ArrayList::new);
+        List<TypeSpec> fallbackObjectTypes = Optional.ofNullable(this.fallbackObjectTypes).orElseGet(ArrayList::new);
+        if (acceptedLocales.isEmpty()) {
+            LOGGER.warn("No default accepted locales set, this may not be desired");
+        }
+        if (acceptedMimeTypes.isEmpty()) {
+            LOGGER.warn("No default accepted mime types set, this may leave target server without a hint in which " +
+                    "mime type data should be returned");
+        }
+        return new RequestOptions()
+                .setRetryPolicy(retryPolicy)
+                .setSerializationType(defaultSerializationType)
+                .setAcceptedLocales(acceptedLocales)
+                .setAcceptedMimeTypes(acceptedMimeTypes)
+                .setFallbackObjectTypes(fallbackObjectTypes)
+                .setTimeout(defaultTimeout)
+                .setClientIdentifier(clientIdentifier);
+    }
 
-        ClientOptions clientOptions = new ClientOptions()
-                .setDefaultSerializationType(defaultSerializationType);
-        return new DefaultClient(transportManager, serializationManager, processor, defaultRequestOptions,
-                clientOptions);
+    private ApplicationClient constructApplicationClient() {
+        CompletableFutureFactory responseProcessingFutureFactory = constructResponseProcessingFutureFactory();
+        SynchronousSerializationManager serializationManager = constructSerializationManager();
+        TransportManager transportManager = constructTransportManager();
+        ApplicationClient applicationClient
+                = new ApplicationClient(transportManager, serializationManager, responseProcessingFutureFactory);
+        interceptors.stream().map(Supplier::get).forEach(applicationClient::addInterceptor);
+        return applicationClient;
+    }
+
+    private CompletableFutureFactory constructResponseProcessingFutureFactory() {
+        StaticValidator.requireNonNull(responseProcessingExecutor,
+                "Executor for processing responses is not specified");
+        Executor executor = responseProcessingExecutor.get();
+        StaticValidator.requireNonNull(executor, "Executor for processing responses is not specified");
+        return new BasicCompletableFutureFactory(executor);
+    }
+
+    private SynchronousSerializationManager constructSerializationManager() {
+        List<Serializer> serializers = this.serializers.stream()
+                .map(Supplier::get)
+                .filter(serializer -> {
+                    if (serializer == null) {
+                        LOGGER.warn("Null supplied instead of serializer");
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+        if (serializers.isEmpty()) {
+            LOGGER.warn("No serializers supplied. That wont necessarily lead to errors (e.g. you can safely use " +
+                    "byte arrays and input streams as target type), but highly undesirable and probably " +
+                    "indicates an error.");
+        }
+        return new DefaultSerializationManager(serializers);
+    }
+
+    private TransportManager constructTransportManager() {
+        StaticValidator.requireNonNull(scheduler, "Scheduled executor is not set");
+        ScheduledExecutor scheduledExecutor = scheduler.get();
+        StaticValidator.requireNonNull(scheduledExecutor, "Scheduled executor is not set");
+        DelayService delayService = constructDelayService(scheduledExecutor);
+        TransportRegistry transports = constructTransportRegistry();
+        ServerRegistry servers = constructServerRegistry(transports);
+        TransportRequestExecutor requestExecutor = constructTransportRequestExecutor(transports, scheduledExecutor);
+        return new DefaultTransportManager(servers, requestExecutor, delayService);
+    }
+
+    private TransportRequestExecutor constructTransportRequestExecutor(
+            TransportRegistry transports,
+            ScheduledExecutor scheduledExecutor) {
+
+        TimeoutService timeoutService = constructTimeoutService(scheduledExecutor);
+        return new TransportRequestExecutor(transports, timeoutService);
+    }
+
+    private TransportRegistry constructTransportRegistry() {
+        List<Transport> transports = this.transports.stream()
+                .map(Supplier::get)
+                .filter(transport -> {
+                    if (transport == null) {
+                        LOGGER.warn("Empty transport supplier found");
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+        if (transports.isEmpty()) {
+            throw new IllegalStateException("No transports specified");
+        }
+        return new TransportRegistry(transports);
+    }
+
+    private ServerRegistry constructServerRegistry(TransportRegistry transports) {
+        StaticValidator.requireNonNull(serverProvider, "Server address provider is not set");
+        StaticValidator.requireNonNull(loadBalancingPolicy, "Load balancing policy is not set");
+        return new DefaultServerRegistry(serverProvider, transports, loadBalancingPolicy);
+    }
+
+    private TimeoutService constructTimeoutService(ScheduledExecutor executor) {
+        return new DefaultTimeoutService(executor);
+    }
+
+    private DelayService constructDelayService(ScheduledExecutor executor) {
+        return new DefaultDelayService(executor);
     }
 }

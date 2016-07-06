@@ -12,10 +12,10 @@ public class ExponentialBackoffRetryPolicy extends AbstractRetryPolicy {
     public static final long DEFAULT_MINIMUM_DELAY = 100;
     public static final long DEFAULT_MAXIMUM_DELAY = 10000;
 
-    private final RetryPolicyTimeRange range;
+    private final TimeRange range;
 
     public ExponentialBackoffRetryPolicy(
-            RetryPolicyTimeRange range,
+            TimeRange range,
             int maximumAttempts,
             boolean shouldRetryOnServerError,
             boolean shouldRetryOnClientError) {
@@ -25,7 +25,7 @@ public class ExponentialBackoffRetryPolicy extends AbstractRetryPolicy {
     }
 
     public ExponentialBackoffRetryPolicy(
-            RetryPolicyTimeRange range,
+            TimeRange range,
             int maximumAttempts,
             boolean shouldRetryOnServerError) {
 
@@ -33,28 +33,27 @@ public class ExponentialBackoffRetryPolicy extends AbstractRetryPolicy {
         this.range = range;
     }
 
-    public ExponentialBackoffRetryPolicy(RetryPolicyTimeRange range, int maximumAttempts) {
+    public ExponentialBackoffRetryPolicy(TimeRange range, int maximumAttempts) {
         super(maximumAttempts);
         this.range = range;
     }
 
-    public ExponentialBackoffRetryPolicy(RetryPolicyTimeRange range) {
+    public ExponentialBackoffRetryPolicy(TimeRange range) {
         this.range = range;
     }
 
     public ExponentialBackoffRetryPolicy() {
-        this(new RetryPolicyTimeRange(DEFAULT_MINIMUM_DELAY, DEFAULT_MAXIMUM_DELAY));
+        this(new TimeRange(DEFAULT_MINIMUM_DELAY, DEFAULT_MAXIMUM_DELAY));
     }
 
     @Override
     public long calculateDelay(int attempt) {
         int i = 0;
-        long buffer = 1;
+        int multiplier = 1;
         while (i++ < attempt) {
-            buffer *= MathUtilities.applyRandomFactor(range.getMinimumDelay(), range.getRandomFactor());
+            multiplier *= 2;
         }
-        long maximum = MathUtilities.applyRandomFactor(range.getMaximumDelay(), range.getRandomFactor());
-        long minimum = MathUtilities.applyRandomFactor(range.getMinimumDelay(), range.getRandomFactor());
-        return MathUtilities.limit(buffer, minimum, maximum);
+        long value = Math.min(range.getMinimumDelay() * multiplier, range.getMaximumDelay());
+        return MathUtilities.applyRandomFactor(value, range.getRandomFactor());
     }
 }

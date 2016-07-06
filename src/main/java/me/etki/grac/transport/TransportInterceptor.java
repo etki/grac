@@ -9,6 +9,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface TransportInterceptor {
 
-    CompletableFuture<TransportRequest> processRequest(TransportRequest request);
-    CompletableFuture<TransportResponse> processResponse(TransportResponse response);
+    CompletableFuture<ServerRequest> processRequest(ServerRequest request);
+    CompletableFuture<ServerResponse> processResponse(ServerResponse response);
 }

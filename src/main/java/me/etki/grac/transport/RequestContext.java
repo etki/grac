@@ -1,6 +1,7 @@
 package me.etki.grac.transport;
 
-import java.time.Instant;
+import me.etki.grac.policy.RetryPolicy;
+import me.etki.grac.transport.trace.Trace;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -9,64 +10,19 @@ import java.time.Instant;
  */
 public class RequestContext {
 
-    private TLRequest tlRequest;
-    private TransportRequest transportRequest;
-    private int attemptNumber;
-    private Instant startedAt;
-    private Instant finishedAt;
-    private Trace trace;
+    private final RetryPolicy retryPolicy;
+    private final Trace trace;
 
-    public TLRequest getTlRequest() {
-        return tlRequest;
+    public RequestContext(RetryPolicy retryPolicy, Trace trace) {
+        this.retryPolicy = retryPolicy;
+        this.trace = trace;
     }
 
-    public RequestContext setTlRequest(TLRequest tlRequest) {
-        this.tlRequest = tlRequest;
-        return this;
-    }
-
-    public TransportRequest getTransportRequest() {
-        return transportRequest;
-    }
-
-    public RequestContext setTransportRequest(TransportRequest transportRequest) {
-        this.transportRequest = transportRequest;
-        return this;
-    }
-
-    public int getAttemptNumber() {
-        return attemptNumber;
-    }
-
-    public RequestContext setAttemptNumber(int attemptNumber) {
-        this.attemptNumber = attemptNumber;
-        return this;
-    }
-
-    public Instant getFinishedAt() {
-        return finishedAt;
-    }
-
-    public RequestContext setFinishedAt(Instant finishedAt) {
-        this.finishedAt = finishedAt;
-        return this;
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
     }
 
     public Trace getTrace() {
         return trace;
-    }
-
-    public RequestContext setTrace(Trace trace) {
-        this.trace = trace;
-        return this;
-    }
-
-    public Instant getStartedAt() {
-        return startedAt;
-    }
-
-    public RequestContext setStartedAt(Instant startedAt) {
-        this.startedAt = startedAt;
-        return this;
     }
 }

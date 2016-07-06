@@ -9,6 +9,12 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface Transport {
 
-    CompletableFuture<TransportResponse> execute(TransportRequest request);
+    /**
+     * @param request Request to execute.
+     * @return Response promise. It is expected that promise will return either response, {@link ConnectionException}
+     * if there was connection problem, {@link FaultyResponseException} if transport obtained invalid response, or
+     * (discouraged) any other exception.
+     */
+    CompletableFuture<ServerResponse> execute(ServerRequest request);
     boolean supports(String protocol);
 }

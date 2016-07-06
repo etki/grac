@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,12 +33,14 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
         this.serializers = serializers;
     }
 
+    public DefaultSerializationManager(Serializer... serializers) {
+        this(Arrays.asList(serializers));
+    }
+
     public <T> SerializationResult serialize(T payload, MediaType mimeType) throws IOException, SerializationException {
-        if (payload == null) {
-            LOGGER.debug("Null payload provided, short-circuiting");
-            return new SerializationResult()
-                    .setMimeType(mimeType)
-                    .setSize(0L);
+        SerializationResult result = checkEarlySerializationOptions(payload, mimeType);
+        if (result != null) {
+            return result;
         }
         List<SerializationException> exceptionStack = new ArrayList<>();
         for (Serializer serializer : getApplicableSerializers(mimeType)) {
@@ -144,6 +147,35 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
             LOGGER.debug("Client code has requested byte array, returning it directly");
             return DeserializationResult.normal((T) bytes);
         }
+        return null;
+    }
+
+    private <T> SerializationResult checkEarlySerializationOptions(
+            T payload,
+            MediaType mimeType)
+            throws IOException {
+
+        LOGGER.debug("Checking early serialization options");
+        if (payload == null) {
+            LOGGER.debug("Null payload provided, short-circuiting");
+            return new SerializationResult()
+                    .setSize(0L)
+                    .setContent(null)
+                    .setMimeType(mimeType);
+        }
+        if (InputStream.class.isAssignableFrom(payload.getClass())) {
+            LOGGER.debug("Input stream payload provided, short-circuiting");
+            return new SerializationResult()
+                    .setContent((InputStream) payload)
+                    .setMimeType(mimeType);
+        }
+        if (payload.getClass().equals(byte[].class)) {
+            LOGGER.debug("Byte array payload provided, short-circuiting");
+            return new SerializationResult()
+                    .setContent(new ByteArrayInputStream((byte[]) payload))
+                    .setMimeType(mimeType);
+        }
+        LOGGER.debug("Could not shortcut serialization using early options");
         return null;
     }
 }

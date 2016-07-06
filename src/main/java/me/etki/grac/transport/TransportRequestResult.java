@@ -7,14 +7,14 @@ package me.etki.grac.transport;
  */
 public class TransportRequestResult {
 
-    private TransportResponse response;
+    private ServerResponse response;
     private Throwable exception;
 
-    public TransportResponse getResponse() {
+    public ServerResponse getResponse() {
         return response;
     }
 
-    public TransportRequestResult setResponse(TransportResponse response) {
+    public TransportRequestResult setResponse(ServerResponse response) {
         this.response = response;
         return this;
     }

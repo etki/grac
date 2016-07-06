@@ -40,10 +40,4 @@ public interface CompletableFutureFactory {
     interface Task {
         void execute() throws Exception;
     }
-
-    static <T> CompletableFuture<T> completedExceptionally(Throwable e) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        future.completeExceptionally(e);
-        return future;
-    }
 }

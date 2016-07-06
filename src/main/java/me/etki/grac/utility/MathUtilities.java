@@ -25,6 +25,9 @@ public class MathUtilities {
     }
 
     public static long applyRandomFactor(long value, double randomFactor) {
+        if (randomFactor == 0.0) {
+            return value;
+        }
         randomFactor = randomFactor * RANDOM.nextDouble();
         double multiplier = 1.0 + (RANDOM.nextBoolean() ? randomFactor : -randomFactor);
         return (long) (value * multiplier);

@@ -1,38 +1,34 @@
 package me.etki.grac.transport;
 
 import com.google.common.net.MediaType;
-import me.etki.grac.Action;
-import me.etki.grac.common.ServerDetails;
-import me.etki.grac.common.Metadata;
-import me.etki.grac.common.Payload;
+import me.etki.grac.common.Action;
+import me.etki.grac.policy.RetryPolicy;
+import me.etki.grac.utility.StaticValidator;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
+ * todo: convert to interface, add isIdempotent() method
+ * todo: add application-to-transport layer converter interface so users could convert requests using their own logic
+ *
  * @author Etki {@literal <etki@etki.name>}
  * @version %I%, %G%
  * @since 0.1.0
  */
 public class TransportRequest {
 
-    private ServerDetails serverDetails;
     private Action action;
     private String resource;
-    private List<MediaType> acceptedTypes;
+    private Map<String, List<Object>> parameters;
+    private Map<String, List<Object>> metadata;
+    private List<MediaType> acceptedMimeTypes;
     private List<String> acceptedLocales;
-    private String clientIdentifier;
+    private RetryPolicy retryPolicy;
     private Long timeout;
-    private Metadata metadata;
     private Payload payload;
-
-    public ServerDetails getServerDetails() {
-        return serverDetails;
-    }
-
-    public TransportRequest setServerDetails(ServerDetails serverDetails) {
-        this.serverDetails = serverDetails;
-        return this;
-    }
+    private String clientIdentifier;
 
     public Action getAction() {
         return action;
@@ -52,12 +48,21 @@ public class TransportRequest {
         return this;
     }
 
-    public List<MediaType> getAcceptedTypes() {
-        return acceptedTypes;
+    public Map<String, List<Object>> getParameters() {
+        return parameters;
     }
 
-    public TransportRequest setAcceptedTypes(List<MediaType> acceptedTypes) {
-        this.acceptedTypes = acceptedTypes;
+    public TransportRequest setParameters(Map<String, List<Object>> parameters) {
+        this.parameters = parameters;
+        return this;
+    }
+
+    public List<MediaType> getAcceptedMimeTypes() {
+        return acceptedMimeTypes;
+    }
+
+    public TransportRequest setAcceptedMimeTypes(List<MediaType> acceptedMimeTypes) {
+        this.acceptedMimeTypes = acceptedMimeTypes;
         return this;
     }
 
@@ -70,15 +75,6 @@ public class TransportRequest {
         return this;
     }
 
-    public String getClientIdentifier() {
-        return clientIdentifier;
-    }
-
-    public TransportRequest setClientIdentifier(String clientIdentifier) {
-        this.clientIdentifier = clientIdentifier;
-        return this;
-    }
-
     public Long getTimeout() {
         return timeout;
     }
@@ -88,21 +84,55 @@ public class TransportRequest {
         return this;
     }
 
-    public Metadata getMetadata() {
+    public Map<String, List<Object>> getMetadata() {
         return metadata;
     }
 
-    public TransportRequest setMetadata(Metadata metadata) {
+    public TransportRequest setMetadata(Map<String, List<Object>> metadata) {
         this.metadata = metadata;
         return this;
     }
 
-    public Payload getPayload() {
-        return payload;
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
+    }
+
+    public TransportRequest setRetryPolicy(RetryPolicy retryPolicy) {
+        this.retryPolicy = retryPolicy;
+        return this;
+    }
+
+    public Optional<Payload> getPayload() {
+        return Optional.ofNullable(payload);
     }
 
     public TransportRequest setPayload(Payload payload) {
         this.payload = payload;
         return this;
+    }
+
+    public Optional<String> getClientIdentifier() {
+        return Optional.ofNullable(clientIdentifier);
+    }
+
+    public TransportRequest setClientIdentifier(String clientIdentifier) {
+        this.clientIdentifier = clientIdentifier;
+        return this;
+    }
+
+    public void validate() {
+        StaticValidator.requireNonNull(action, "Action could not be null");
+        StaticValidator.requireNonNull(resource, "Resource could not be null");
+        StaticValidator.requireNonNull(parameters, "Parameters could not be null (empty value allowed)");
+        StaticValidator.requireNonNull(metadata, "Metadata could not be null (empty value allowed)");
+        StaticValidator.requireNonNull(acceptedMimeTypes, "Accepted types could not be null (empty value allowed)");
+        StaticValidator.requireNonNull(acceptedLocales, "Accepted locales could not be null (empty value allowed)");
+        StaticValidator.requireNonNull(retryPolicy, "Retry policy could not be null");
+        StaticValidator.requireNonNull(timeout, "Timeout could not be null");
+    }
+
+    @Override
+    public String toString() {
+        return "TransportRequest {action=" + action + ", resource='" + resource + "', timeout=" + timeout + "}";
     }
 }

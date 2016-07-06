@@ -1,15 +1,19 @@
 package me.etki.grac;
 
-import com.google.common.net.MediaType;
-import me.etki.grac.common.Payload;
-import me.etki.grac.io.SynchronousSerializationManager;
-import me.etki.grac.transport.TLRequest;
-import me.etki.grac.transport.TLResponse;
-import me.etki.grac.transport.TransportManager;
+import me.etki.grac.application.ApplicationClient;
+import me.etki.grac.application.ApplicationRequest;
+import me.etki.grac.application.ApplicationResponse;
+import me.etki.grac.concurrent.CompletableFutures;
+import me.etki.grac.exception.ClientErrorException;
+import me.etki.grac.exception.InvalidResponseFormatException;
+import me.etki.grac.exception.ServerErrorException;
+import me.etki.grac.transport.ResponseStatus;
 import me.etki.grac.utility.TypeSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,19 +26,14 @@ public class DefaultClient implements Client {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClient.class);
 
-    private final TransportManager transportManager;
-    private final SynchronousSerializationManager serializationManager;
-    private final RequestResponseProcessor processor;
+    private final ApplicationClient client;
     private final RequestOptions defaultRequestOptions;
     private final ClientOptions clientOptions;
 
-    public DefaultClient(TransportManager transportManager, SynchronousSerializationManager serializationManager,
-                         RequestResponseProcessor processor, RequestOptions defaultRequestOptions,
+    public DefaultClient(ApplicationClient client, RequestOptions defaultRequestOptions,
                          ClientOptions clientOptions) {
 
-        this.transportManager = transportManager;
-        this.serializationManager = serializationManager;
-        this.processor = processor;
+        this.client = client;
         this.defaultRequestOptions = defaultRequestOptions;
         this.clientOptions = clientOptions;
     }
@@ -44,79 +43,67 @@ public class DefaultClient implements Client {
         return defaultRequestOptions;
     }
 
-    @Override
     public <I, O> CompletableFuture<Response<O>> execute(Request<I> request, TypeSpec expectedType,
-                                                         RequestOptions options) {
+                                                                 RequestOptions options) {
 
         RequestOptions requestOptions = RequestOptions.merge(options.copy(), defaultRequestOptions);
-        AssembledRequest<I> assembledRequest = assembleRequest(request, expectedType, requestOptions);
-        return processor.processRequest(assembledRequest)
-                .thenCompose(this::<I, O>execute)
-                .thenCompose(processor::processResponse)
-                .thenApply(this::extractResponse);
+        ApplicationRequest<I> applicationRequest = assembleRequest(request, expectedType, requestOptions);
+        return client
+                .<I, O>execute(applicationRequest)
+                .thenCompose(this::postprocess)
+                .thenApply(this::assembleResponse);
     }
 
-    private <I> AssembledRequest<I> assembleRequest(Request<I> request, TypeSpec expectedType, RequestOptions options) {
-        MediaType serializationType = Optional
-                .of(options.getSerializationType())
-                .orElseGet(this.clientOptions::getDefaultSerializationType);
-        return new AssembledRequest<I>()
-                .setResource(request.getResource())
+    private <O> CompletableFuture<ApplicationResponse<O>> postprocess(ApplicationResponse<O> response) {
+        if (ResponseStatus.CLIENT_ERROR.equals(response.getStatus()) && clientOptions.shouldThrowOnClientError()) {
+            String message = "Response resulted in client error: " + response.getDescription();
+            ClientErrorException exception = new ClientErrorException(message);
+            exception.setResponse(response);
+            return CompletableFutures.exceptional(exception);
+        }
+        if (ResponseStatus.SERVER_ERROR.equals(response.getStatus()) && clientOptions.shouldThrowOnServerError()) {
+            String message = "Response resulted in server error: " + response.getDescription();
+            ServerErrorException exception = new ServerErrorException(message);
+            exception.setResponse(response);
+            return CompletableFutures.exceptional(exception);
+        }
+        if (response.getAltResult().isPresent() && clientOptions.shouldThrowOnInvalidResponsePayloadType()) {
+            String message = "Server returned unexpected structure";
+            InvalidResponseFormatException exception = new InvalidResponseFormatException(message);
+            exception.setResponse(response);
+            return CompletableFutures.exceptional(exception);
+        }
+        return CompletableFutures.completed(response);
+    }
+
+    private <I> ApplicationRequest<I> assembleRequest(
+            Request<I> request,
+            TypeSpec expectedType,
+            RequestOptions options) {
+
+        return new ApplicationRequest<I>()
                 .setAction(request.getAction())
-                .setPayload(request.getPayload())
-                .setMetadata(request.getMetadata())
+                .setResource(request.getResource())
+                .setParameters(Optional.ofNullable(request.getParameters()).orElseGet(HashMap::new))
+                .setPayload(request.getPayload().orElse(null))
+                .setTimeout(options.getTimeout())
                 .setExpectedType(expectedType)
+                .setFallbackTypes(Optional.ofNullable(options.getFallbackObjectTypes()).orElseGet(ArrayList::new))
                 .setRetryPolicy(options.getRetryPolicy())
-                .setSerializationType(serializationType)
-                .setAcceptedTypes(options.getAcceptedTypes())
-                .setAcceptedLocales(options.getAcceptedLocales())
-                .setFallbackTypes(options.getFallbackTypes())
-                .setTimeout(options.getTimeout());
+                .setSerializationType(options.getSerializationType())
+                .setAcceptedLocales(Optional.ofNullable(options.getAcceptedLocales()).orElseGet(ArrayList::new))
+                .setAcceptedMimeTypes(Optional.ofNullable(options.getAcceptedMimeTypes()).orElseGet(ArrayList::new))
+                .setMetadata(Optional.ofNullable(request.getMetadata()).orElseGet(HashMap::new))
+                .setClientIdentifier(options.getClientIdentifier());
     }
 
-    private <I> CompletableFuture<TLRequest> convertRequest(AssembledRequest<I> request) {
-        CompletableFuture<Payload> payloadFuture = CompletableFuture.completedFuture(null); // todo
-        TLRequest tlRequest = new TLRequest()
-                .setResource(request.getResource())
-                .setAction(request.getAction())
-                .setAcceptedTypes(request.getAcceptedTypes())
-                .setAcceptedLocales(request.getAcceptedLocales())
-                .setTimeout(request.getTimeout())
-                .setMetadata(request.getMetadata());
-        return payloadFuture.thenApply(tlRequest::setPayload);
-    }
-
-    private <I, O> CompletableFuture<AssembledResponse<I, O>> assembleResponse(AssembledRequest<I> request, TLRequest tlRequest, TLResponse tlResponse) {
-        CompletableFuture<O> output = CompletableFuture.completedFuture(null); // todo
-        AssembledResponse<I, O> response = new AssembledResponse<I, O>()
-                .setStatus(tlResponse.getStatus())
-                .setDescription(tlResponse.getDescription())
-                .setMetadata(tlResponse.getMetadata())
-                .setRequest(request)
-                .setTransportLayerRequest(tlRequest)
-                .setTransportLayerResponse(tlResponse);
-        return output
-                .thenApply(response::setResult);
-    }
-
-    private <I, O> Response<O> extractResponse(AssembledResponse<I, O> response) {
+    private <O> Response<O> assembleResponse(ApplicationResponse<O> response) {
         return new Response<O>()
                 .setStatus(response.getStatus())
-                .setDescription(response.getDescription())
-                .setResult(response.getResult())
-                .setAltResult(response.getAltResult())
+                .setDescription(response.getDescription().orElse(null))
+                .setResult(response.getResult().orElse(null))
+                .setAltResult(response.getAltResult().orElse(null))
                 .setMetadata(response.getMetadata())
-                .setTransportRequest(response.getTransportLayerRequest())
-                .setTransportResponse(response.getTransportLayerResponse());
-    }
-
-    private <I, O> CompletableFuture<AssembledResponse<I, O>> execute(AssembledRequest<I> request) {
-        // todo ugh
-        return convertRequest(request)
-                .thenCompose(tlRequest ->
-                        transportManager
-                                .execute(tlRequest)
-                                .thenCompose(tlResponse -> assembleResponse(request, tlRequest, tlResponse))
-                );
+                .setTrace(response.getTrace());
     }
 }

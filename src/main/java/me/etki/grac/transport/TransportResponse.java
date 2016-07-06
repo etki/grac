@@ -1,8 +1,10 @@
 package me.etki.grac.transport;
 
-import me.etki.grac.common.Metadata;
-import me.etki.grac.common.Payload;
-import me.etki.grac.common.ResponseStatus;
+import me.etki.grac.transport.trace.Trace;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -13,8 +15,9 @@ public class TransportResponse {
 
     private ResponseStatus status;
     private String description;
-    private Metadata metadata;
+    private Map<String, List<Object>> metadata;
     private Payload payload;
+    private Trace trace;
 
     public ResponseStatus getStatus() {
         return status;
@@ -25,8 +28,26 @@ public class TransportResponse {
         return this;
     }
 
-    public String getDescription() {
-        return description;
+    public Map<String, List<Object>> getMetadata() {
+        return metadata;
+    }
+
+    public TransportResponse setMetadata(Map<String, List<Object>> metadata) {
+        this.metadata = metadata;
+        return this;
+    }
+
+    public Optional<Payload> getPayload() {
+        return Optional.ofNullable(payload);
+    }
+
+    public TransportResponse setPayload(Payload payload) {
+        this.payload = payload;
+        return this;
+    }
+
+    public Optional<String> getDescription() {
+        return Optional.ofNullable(description);
     }
 
     public TransportResponse setDescription(String description) {
@@ -34,21 +55,12 @@ public class TransportResponse {
         return this;
     }
 
-    public Metadata getMetadata() {
-        return metadata;
+    public Trace getTrace() {
+        return trace;
     }
 
-    public TransportResponse setMetadata(Metadata metadata) {
-        this.metadata = metadata;
-        return this;
-    }
-
-    public Payload getPayload() {
-        return payload;
-    }
-
-    public TransportResponse setPayload(Payload payload) {
-        this.payload = payload;
+    public TransportResponse setTrace(Trace trace) {
+        this.trace = trace;
         return this;
     }
 }

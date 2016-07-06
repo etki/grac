@@ -9,5 +9,5 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface TransportManager {
 
-    CompletableFuture<TLResponse> execute(TLRequest request);
+    CompletableFuture<TransportResponse> execute(TransportRequest request);
 }

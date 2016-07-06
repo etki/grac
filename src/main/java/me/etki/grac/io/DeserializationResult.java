@@ -1,5 +1,7 @@
 package me.etki.grac.io;
 
+import java.util.Optional;
+
 /**
  * @author Etki {@literal <etki@etki.name>}
  * @version %I%, %G%
@@ -15,12 +17,12 @@ public class DeserializationResult<T> {
         this.altResult = altResult;
     }
 
-    public T getResult() {
-        return result;
+    public Optional<T> getResult() {
+        return Optional.ofNullable(result);
     }
 
-    public Object getAltResult() {
-        return altResult;
+    public Optional<Object> getAltResult() {
+        return Optional.ofNullable(altResult);
     }
 
     public static <T> DeserializationResult<T> normal(T result) {

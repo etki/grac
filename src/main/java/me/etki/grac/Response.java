@@ -1,9 +1,11 @@
 package me.etki.grac;
 
-import me.etki.grac.common.Metadata;
-import me.etki.grac.common.ResponseStatus;
-import me.etki.grac.transport.TLRequest;
-import me.etki.grac.transport.TLResponse;
+import me.etki.grac.transport.ResponseStatus;
+import me.etki.grac.transport.trace.Trace;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -16,9 +18,8 @@ public class Response<T> {
     private String description;
     private T result;
     private Object altResult;
-    private Metadata metadata;
-    private TLRequest transportRequest;
-    private TLResponse transportResponse;
+    private Map<String, List<Object>> metadata;
+    private Trace trace;
 
     public ResponseStatus getStatus() {
         return status;
@@ -29,8 +30,8 @@ public class Response<T> {
         return this;
     }
 
-    public String getDescription() {
-        return description;
+    public Optional<String> getDescription() {
+        return Optional.ofNullable(description);
     }
 
     public Response<T> setDescription(String description) {
@@ -38,8 +39,8 @@ public class Response<T> {
         return this;
     }
 
-    public T getResult() {
-        return result;
+    public Optional<T> getResult() {
+        return Optional.ofNullable(result);
     }
 
     public Response<T> setResult(T result) {
@@ -47,8 +48,8 @@ public class Response<T> {
         return this;
     }
 
-    public Object getAltResult() {
-        return altResult;
+    public Optional<Object> getAltResult() {
+        return Optional.ofNullable(altResult);
     }
 
     public Response<T> setAltResult(Object altResult) {
@@ -56,30 +57,21 @@ public class Response<T> {
         return this;
     }
 
-    public Metadata getMetadata() {
+    public Map<String, List<Object>> getMetadata() {
         return metadata;
     }
 
-    public Response<T> setMetadata(Metadata metadata) {
+    public Response<T> setMetadata(Map<String, List<Object>> metadata) {
         this.metadata = metadata;
         return this;
     }
 
-    public TLRequest getTransportRequest() {
-        return transportRequest;
+    public Trace getTrace() {
+        return trace;
     }
 
-    public Response<T> setTransportRequest(TLRequest transportRequest) {
-        this.transportRequest = transportRequest;
-        return this;
-    }
-
-    public TLResponse getTransportResponse() {
-        return transportResponse;
-    }
-
-    public Response<T> setTransportResponse(TLResponse transportResponse) {
-        this.transportResponse = transportResponse;
+    public Response<T> setTrace(Trace trace) {
+        this.trace = trace;
         return this;
     }
 }

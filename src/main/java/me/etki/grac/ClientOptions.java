@@ -1,8 +1,5 @@
 package me.etki.grac;
 
-import com.google.common.net.MediaType;
-import me.etki.grac.policy.RetryPolicy;
-
 /**
  * @author Etki {@literal <etki@etki.name>}
  * @version %I%, %G%
@@ -10,24 +7,34 @@ import me.etki.grac.policy.RetryPolicy;
  */
 public class ClientOptions {
 
-    private MediaType defaultSerializationType;
-    private RetryPolicy defaultRetryPolicy;
+    private boolean throwOnClientError = true;
+    private boolean throwOnServerError = true;
+    private boolean throwOnInvalidResponsePayloadType = true;
 
-    public MediaType getDefaultSerializationType() {
-        return defaultSerializationType;
+    public boolean shouldThrowOnClientError() {
+        return throwOnClientError;
     }
 
-    public ClientOptions setDefaultSerializationType(MediaType defaultSerializationType) {
-        this.defaultSerializationType = defaultSerializationType;
+    public ClientOptions setThrowOnClientError(boolean throwOnClientError) {
+        this.throwOnClientError = throwOnClientError;
         return this;
     }
 
-    public RetryPolicy getDefaultRetryPolicy() {
-        return defaultRetryPolicy;
+    public boolean shouldThrowOnServerError() {
+        return throwOnServerError;
     }
 
-    public ClientOptions setDefaultRetryPolicy(RetryPolicy defaultRetryPolicy) {
-        this.defaultRetryPolicy = defaultRetryPolicy;
+    public ClientOptions setThrowOnServerError(boolean throwOnServerError) {
+        this.throwOnServerError = throwOnServerError;
+        return this;
+    }
+
+    public boolean shouldThrowOnInvalidResponsePayloadType() {
+        return throwOnInvalidResponsePayloadType;
+    }
+
+    public ClientOptions setThrowOnInvalidResponsePayloadType(boolean throwOnInvalidResponsePayloadType) {
+        this.throwOnInvalidResponsePayloadType = throwOnInvalidResponsePayloadType;
         return this;
     }
 }

@@ -1,6 +1,10 @@
 package me.etki.grac;
 
-import me.etki.grac.common.Metadata;
+import me.etki.grac.common.Action;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -11,8 +15,9 @@ public class Request<T> {
 
     private String resource;
     private Action action;
+    private Map<String, List<Object>> parameters;
+    private Map<String, List<Object>> metadata;
     private T payload;
-    private Metadata metadata;
 
     public Request() {
     }
@@ -32,7 +37,7 @@ public class Request<T> {
         return resource;
     }
 
-    public Request setResource(String resource) {
+    public Request<T> setResource(String resource) {
         this.resource = resource;
         return this;
     }
@@ -41,25 +46,34 @@ public class Request<T> {
         return action;
     }
 
-    public Request setAction(Action action) {
+    public Request<T> setAction(Action action) {
         this.action = action;
         return this;
     }
 
-    public Metadata getMetadata() {
+    public Map<String, List<Object>> getParameters() {
+        return parameters;
+    }
+
+    public Request<T> setParameters(Map<String, List<Object>> parameters) {
+        this.parameters = parameters;
+        return this;
+    }
+
+    public Map<String, List<Object>> getMetadata() {
         return metadata;
     }
 
-    public Request setMetadata(Metadata metadata) {
+    public Request<T> setMetadata(Map<String, List<Object>> metadata) {
         this.metadata = metadata;
         return this;
     }
 
-    public T getPayload() {
-        return payload;
+    public Optional<T> getPayload() {
+        return Optional.ofNullable(payload);
     }
 
-    public Request setPayload(T payload) {
+    public Request<T> setPayload(T payload) {
         this.payload = payload;
         return this;
     }

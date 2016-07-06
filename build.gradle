@@ -46,6 +46,18 @@ dependencies {
 
 def testTypeStack = []
 
+sourceSets {
+    testInfrastructure {
+        java {
+            srcDir 'src/test-infrastructure/java'
+        }
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        compileClasspath += test.compileClasspath
+        runtimeClasspath += test.runtimeClasspath
+    }
+}
+
 ['unit', 'functional', 'system', 'integration', 'stress'].each { testType ->
     sourceSets.create("${testType}Test") {
         java {

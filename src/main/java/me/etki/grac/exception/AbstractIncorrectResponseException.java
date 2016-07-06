@@ -1,6 +1,6 @@
 package me.etki.grac.exception;
 
-import me.etki.grac.AssembledResponse;
+import me.etki.grac.application.ApplicationResponse;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -9,13 +9,13 @@ import me.etki.grac.AssembledResponse;
  */
 public abstract class AbstractIncorrectResponseException extends Exception {
 
-    private AssembledResponse response;
+    private ApplicationResponse response;
 
-    public AssembledResponse getResponse() {
+    public ApplicationResponse getResponse() {
         return response;
     }
 
-    public AbstractIncorrectResponseException setResponse(AssembledResponse response) {
+    public AbstractIncorrectResponseException setResponse(ApplicationResponse response) {
         this.response = response;
         return this;
     }

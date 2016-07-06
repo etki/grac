@@ -11,10 +11,10 @@ public class LinearBackoffRetryPolicy extends AbstractRetryPolicy {
 
     public static final long DEFAULT_STEP = 250;
 
-    private final RetryPolicyTimeRange range;
+    private final TimeRange range;
 
     public LinearBackoffRetryPolicy(
-            RetryPolicyTimeRange range,
+            TimeRange range,
             int maximumAttempts,
             boolean shouldRetryOnServerError,
             boolean shouldRetryOnClientError) {
@@ -24,7 +24,7 @@ public class LinearBackoffRetryPolicy extends AbstractRetryPolicy {
     }
 
     public LinearBackoffRetryPolicy(
-            RetryPolicyTimeRange range,
+            TimeRange range,
             int maximumAttempts,
             boolean shouldRetryOnServerError) {
 
@@ -32,21 +32,18 @@ public class LinearBackoffRetryPolicy extends AbstractRetryPolicy {
         this.range = range;
     }
 
-    public LinearBackoffRetryPolicy(RetryPolicyTimeRange range, int maximumAttempts) {
+    public LinearBackoffRetryPolicy(TimeRange range, int maximumAttempts) {
         super(maximumAttempts);
         this.range = range;
     }
 
-    public LinearBackoffRetryPolicy(RetryPolicyTimeRange range) {
+    public LinearBackoffRetryPolicy(TimeRange range) {
         this.range = range;
     }
 
-    public LinearBackoffRetryPolicy(long step) {
-        this.range = new RetryPolicyTimeRange(step, step * (getMaximumAttempts() - 1));
-    }
-
-    public LinearBackoffRetryPolicy() {
-        this(DEFAULT_STEP);
+    public LinearBackoffRetryPolicy(long step, int maximumAttempts) {
+        super(maximumAttempts);
+        this.range = new TimeRange(step, step * (getMaximumAttempts() - 1));
     }
 
     @Override

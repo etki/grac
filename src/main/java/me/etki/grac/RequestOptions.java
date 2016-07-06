@@ -15,10 +15,11 @@ public class RequestOptions {
 
     private RetryPolicy retryPolicy;
     private MediaType serializationType;
-    private List<MediaType> acceptedTypes;
+    private List<MediaType> acceptedMimeTypes;
     private List<String> acceptedLocales;
-    private List<TypeSpec> fallbackTypes;
+    private List<TypeSpec> fallbackObjectTypes;
     private Long timeout;
+    private String clientIdentifier;
 
     public RetryPolicy getRetryPolicy() {
         return retryPolicy;
@@ -38,21 +39,21 @@ public class RequestOptions {
         return this;
     }
 
-    public List<MediaType> getAcceptedTypes() {
-        return acceptedTypes;
+    public List<MediaType> getAcceptedMimeTypes() {
+        return acceptedMimeTypes;
     }
 
-    public RequestOptions setAcceptedTypes(List<MediaType> acceptedTypes) {
-        this.acceptedTypes = acceptedTypes;
+    public RequestOptions setAcceptedMimeTypes(List<MediaType> acceptedMimeTypes) {
+        this.acceptedMimeTypes = acceptedMimeTypes;
         return this;
     }
 
-    public List<TypeSpec> getFallbackTypes() {
-        return fallbackTypes;
+    public List<TypeSpec> getFallbackObjectTypes() {
+        return fallbackObjectTypes;
     }
 
-    public RequestOptions setFallbackTypes(List<TypeSpec> fallbackTypes) {
-        this.fallbackTypes = fallbackTypes;
+    public RequestOptions setFallbackObjectTypes(List<TypeSpec> fallbackObjectTypes) {
+        this.fallbackObjectTypes = fallbackObjectTypes;
         return this;
     }
 
@@ -74,12 +75,21 @@ public class RequestOptions {
         return this;
     }
 
+    public String getClientIdentifier() {
+        return clientIdentifier;
+    }
+
+    public RequestOptions setClientIdentifier(String clientIdentifier) {
+        this.clientIdentifier = clientIdentifier;
+        return this;
+    }
+
     public RequestOptions copy() {
         return new RequestOptions()
                 .setRetryPolicy(retryPolicy)
-                .setAcceptedTypes(acceptedTypes)
+                .setAcceptedMimeTypes(acceptedMimeTypes)
                 .setAcceptedLocales(acceptedLocales)
-                .setFallbackTypes(fallbackTypes)
+                .setFallbackObjectTypes(fallbackObjectTypes)
                 .setTimeout(timeout);
     }
 
@@ -88,8 +98,8 @@ public class RequestOptions {
         if (target.getRetryPolicy() == null) {
             target.setRetryPolicy(source.getRetryPolicy());
         }
-        if (target.getAcceptedTypes() == null) {
-            target.setAcceptedTypes(source.getAcceptedTypes());
+        if (target.getAcceptedMimeTypes() == null) {
+            target.setAcceptedMimeTypes(source.getAcceptedMimeTypes());
         }
         if (target.getAcceptedLocales() == null) {
             target.setAcceptedLocales(source.getAcceptedLocales());
@@ -97,8 +107,11 @@ public class RequestOptions {
         if (target.getTimeout() == null) {
             target.setTimeout(source.getTimeout());
         }
-        if (target.getFallbackTypes() == null) {
-            target.setFallbackTypes(source.getFallbackTypes());
+        if (target.getFallbackObjectTypes() == null) {
+            target.setFallbackObjectTypes(source.getFallbackObjectTypes());
+        }
+        if (target.getSerializationType() == null) {
+            target.setSerializationType(source.getSerializationType());
         }
         return target;
     }
