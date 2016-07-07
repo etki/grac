@@ -40,7 +40,7 @@ public class DefaultSerializationManagerSystemTest {
             new JavaNativeSerializer()
     );
 
-    private DefaultSerializationManager serializationManager = new DefaultSerializationManager(serializers);
+    private DefaultSerializationManager serializationManager = manager(serializers);
 
     @Test
     public void shouldCorrectlySerializeNullPayload() throws Exception {
@@ -63,8 +63,7 @@ public class DefaultSerializationManagerSystemTest {
         when(serializer.serialize(any(), any())).thenThrow(new RuntimeException());
         when(serializer.deserialize(any(), any(), any())).thenThrow(new RuntimeException());
         when(serializer.supports(any())).thenThrow(new RuntimeException());
-        DefaultSerializationManager serializationManager
-                = new DefaultSerializationManager(Collections.singletonList(serializer));
+        DefaultSerializationManager serializationManager = manager(serializer);
         DeserializationResult<String> result = serializationManager
                 .deserialize(null, JSON_MIME_TYPE, new TypeSpec(String.class), Collections.emptyList());
         assertFalse(result.getAltResult().isPresent());
@@ -124,12 +123,20 @@ public class DefaultSerializationManagerSystemTest {
         when(healthySerializer.deserialize(any(), any(), any())).thenReturn(value);
         List<Serializer> serializers = new ArrayList<>(faultySerializers);
         serializers.add(healthySerializer);
-        DefaultSerializationManager serializationManager = new DefaultSerializationManager(serializers);
+        DefaultSerializationManager serializationManager = manager(serializers);
         SerializationResult result = serializationManager.serialize(value, MediaType.ANY_TYPE);
         DeserializationResult<String> deserializationResult = serializationManager.deserialize(result.getContent(),
                 result.getMimeType(), new TypeSpec(String.class), Collections.emptyList());
         assertFalse(deserializationResult.getAltResult().isPresent());
         assertTrue(deserializationResult.getResult().isPresent());
         assertEquals(value, deserializationResult.getResult().get());
+    }
+
+    private static DefaultSerializationManager manager(List<Serializer> serializers) {
+        return new DefaultSerializationManager(serializers, new CachingInputStreamWrapperFactory(), 32768);
+    }
+
+    private static DefaultSerializationManager manager(Serializer serializer) {
+        return manager(Collections.singletonList(serializer));
     }
 }
