@@ -1,5 +1,6 @@
 package me.etki.grac.io;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.net.MediaType;
 import me.etki.grac.exception.NoSuitableSerializerException;
 import me.etki.grac.exception.SerializationException;
@@ -75,43 +76,71 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
         }
         stream = wrapperFactory.wrap(stream);
         // todo do not convert to bytes
-        byte[] data = extractStream(stream);
-        DeserializationResult<T> earlyResult = checkEarlyDeserializationOptions(data, expectedType);
+        DeserializationResult<T> earlyResult = checkEarlyDeserializationOptions(stream, expectedType);
         if (earlyResult != null) {
             return earlyResult;
         }
-        ByteArrayInputStream payload = new ByteArrayInputStream(data);
         List<Serializer> serializers = getApplicableSerializers(mimeType);
         LOGGER.debug("Using following deserializers for mime type {}: {}", mimeType, serializers);
         List<SerializationException> exceptionStack = new ArrayList<>();
-        for (Serializer serializer : serializers) {
-            try {
-                LOGGER.debug("Trying to deserialize type {} using serializer {}", expectedType, serializer);
-                return DeserializationResult.normal(serializer.<T>deserialize(payload, mimeType, expectedType));
-            } catch (SerializationException e) {
-                LOGGER.debug("Failed to deserialize type {} using serializer {}: {}", expectedType, serializer,
-                        e.getMessage());
-                exceptionStack.add(e);
-            } finally {
-                payload.reset();
-            }
+        try {
+            return DeserializationResult.normal(deserializeInternal(stream, mimeType, expectedType));
+        } catch (SerializationException e) {
+            exceptionStack.add(e);
         }
-        for (TypeSpec spec : fallbackTypes) {
-            for (Serializer serializer : serializers) {
-                try {
-                    LOGGER.debug("Trying to deserialize type {} using serializer {}", spec, serializer);
-                    return DeserializationResult.alternative(serializer.<T>deserialize(payload, mimeType, spec));
-                } catch (SerializationException e) {
-                    LOGGER.debug("Failed to deserialize type {} using serializer {}: {}", spec, serializer,
-                            e.getMessage());
-                    exceptionStack.add(e);
-                } finally {
-                    payload.reset();
-                }
+        for (TypeSpec fallbackType : fallbackTypes) {
+            try {
+                return DeserializationResult.alternative(deserializeInternal(stream, mimeType, fallbackType));
+            } catch (SerializationException e) {
+                exceptionStack.add(e);
             }
         }
         String message = "Failed to deserialize type " + expectedType + " out of payload of mime type " + expectedType;
         throw new SerializationException(message, exceptionStack.get(0));
+    }
+
+    private <T> T deserializeInternal(InputStream stream, MediaType mimeType, TypeSpec targetType)
+            throws SerializationException, IOException {
+
+        List<Serializer> serializers = getApplicableSerializers(mimeType);
+        List<SerializationException> exceptions = new ArrayList<>();
+        for (Serializer serializer : serializers) {
+            if (stream.markSupported()) {
+                stream.mark(markLimit);
+            }
+            try {
+                return serializer.deserialize(stream, mimeType, targetType);
+            } catch (SerializationException e) {
+                LOGGER.debug("Failed to deserialize stream {} to {} using serializer {}", stream, targetType,
+                        serializer);
+                exceptions.add(e);
+                if (!tryResetStream(stream)) {
+                    throw new IOException("Could not deserialize stream " + stream + " to " + targetType + ", can't " +
+                            "reset stream to try other options");
+                }
+            }
+        }
+        throw exceptions.get(0);
+    }
+
+    private static boolean tryResetStream(InputStream stream) {
+        LOGGER.debug("Trying to reset stream {}", stream);
+        if (!stream.markSupported()) {
+            LOGGER.debug("Stream doesn't support mark/reset pattern");
+            return false;
+        }
+        try {
+            stream.reset();
+            LOGGER.debug("Successfully reset stream {}", stream);
+            return true;
+        } catch (IOException e) {
+            LOGGER.debug("Failed to reset deserialized stream {} due to exception: {} {}", stream, e.getClass(),
+                    e.getMessage());
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Full exception:", e);
+            }
+            return false;
+        }
     }
 
     private List<Serializer> getApplicableSerializers(MediaType mediaType) throws SerializationException {
@@ -136,19 +165,28 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
     }
 
     @SuppressWarnings("unchecked")
-    private <T> DeserializationResult<T> checkEarlyDeserializationOptions(byte[] bytes, TypeSpec expectedType) {
+    private <T> DeserializationResult<T> checkEarlyDeserializationOptions(InputStream stream, TypeSpec expectedType)
+            throws IOException {
 
-        if (bytes.length == 0) {
-            LOGGER.debug("Payload is empty, short-circuiting");
+        if (stream == null) {
+            LOGGER.debug("Null payload provided, short-circuiting");
             return DeserializationResult.normal(null);
         }
         if (InputStream.class.isAssignableFrom(expectedType.getRootType())) {
             LOGGER.debug("Client code has requested raw input stream, returning it directly");
-            return DeserializationResult.normal((T) new ByteArrayInputStream(bytes));
+            return DeserializationResult.normal((T) stream);
         }
         if (byte[].class.isAssignableFrom(expectedType.getRootType())) {
             LOGGER.debug("Client code has requested byte array, returning it directly");
-            return DeserializationResult.normal((T) bytes);
+            return DeserializationResult.normal((T) ByteStreams.toByteArray(stream));
+        }
+        if (stream.markSupported()) {
+            stream.mark(1);
+            if (stream.read() == -1) {
+                LOGGER.debug("Empty stream provided, short-circuiting");
+                return DeserializationResult.normal(null);
+            }
+            stream.reset();
         }
         return null;
     }

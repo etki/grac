@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -62,7 +61,8 @@ public class DefaultSerializationManagerFunctionalTest {
         ByteStreams.copy(result.getContent(), outputStream);
         assertArrayEquals(NORMAL_STREAM_SOURCE, outputStream.toByteArray());
 
-        verify(serializerMock, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
     @Test
@@ -75,7 +75,8 @@ public class DefaultSerializationManagerFunctionalTest {
         assertTrue(result.getResult().isPresent());
         assertArrayEquals(NORMAL_STREAM_SOURCE, result.getResult().get());
 
-        verify(serializerMock, times(0)).deserialize(any(), any(), any());
+        verify(serializer, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
     @Test
@@ -87,8 +88,10 @@ public class DefaultSerializationManagerFunctionalTest {
 
         assertNotNull(result.getContent());
         // not verifying stream equality since it should be wrapped with caching wrapper
+        assertArrayEquals(NORMAL_STREAM_SOURCE, ByteStreams.toByteArray(result.getContent()));
 
-        verify(serializerMock, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
     @Test
@@ -98,8 +101,10 @@ public class DefaultSerializationManagerFunctionalTest {
         DeserializationResult<InputStream> result = manager(serializer)
                 .deserialize(NORMAL_STREAM, MediaType.OCTET_STREAM, INPUT_STREAM_TYPE);
         assertTrue(result.getResult().isPresent());
-        assertEquals(NORMAL_STREAM, result.getResult().get());
+        // not verifying stream equality since it should be wrapped with caching wrapper
+        assertArrayEquals(NORMAL_STREAM_SOURCE, ByteStreams.toByteArray(result.getResult().get()));
 
+        verify(serializer, times(0)).serialize(any(), any());
         verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
@@ -112,6 +117,7 @@ public class DefaultSerializationManagerFunctionalTest {
         assertNull(result.getContent());
 
         verify(serializer, times(0)).serialize(any(), any());
+        verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
     @Test
@@ -123,6 +129,7 @@ public class DefaultSerializationManagerFunctionalTest {
         assertFalse(result.getResult().isPresent());
         assertFalse(result.getAltResult().isPresent());
 
+        verify(serializer, times(0)).serialize(any(), any());
         verify(serializer, times(0)).deserialize(any(), any(), any());
     }
 
