@@ -11,8 +11,10 @@ import me.etki.grac.transport.trace.Trace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -28,15 +30,18 @@ public class DefaultTransportManager implements TransportManager {
     private final ServerRegistry servers;
     private final TransportRequestExecutor requestExecutor;
     private final DelayService delayService;
+    private final int inputStreamMarkLimit;
 
     public DefaultTransportManager(
             ServerRegistry servers,
             TransportRequestExecutor requestExecutor,
-            DelayService delayService) {
+            DelayService delayService,
+            int inputStreamMarkLimit) {
 
         this.servers = servers;
         this.requestExecutor = requestExecutor;
         this.delayService = delayService;
+        this.inputStreamMarkLimit = inputStreamMarkLimit;
     }
 
     public CompletableFuture<TransportResponse> execute(TransportRequest request) {
@@ -48,35 +53,55 @@ public class DefaultTransportManager implements TransportManager {
         LOGGER.debug("Executing request {}, attempt #{}", request, attempt);
         RetryPolicy retryPolicy = request.getRetryPolicy();
         return getServer()
-                .thenApply(server -> assembleServerRequest(request, server))
+                // todo dirty code
+                .thenApply(server -> {
+                    ServerRequest serverRequest = assembleServerRequest(request, server);
+                    Optional<InputStream> content = serverRequest.getPayload().map(Payload::getContent);
+                    if (content.isPresent()) {
+                        if (content.get().markSupported()) {
+                            LOGGER.debug("Found mark/reset supporting payload {}, reserving {} bytes for rollback",
+                                    content.get(), inputStreamMarkLimit);
+                            content.get().mark(inputStreamMarkLimit);
+                        } else {
+                            LOGGER.debug("Provided request payload doesn't support mark/reset, retry " +
+                                    "won't be possible");
+                        }
+                    }
+                    return serverRequest;
+                })
                 .thenCompose(serverRequest -> executeAndRecord(serverRequest, trace))
                 // todo refactoring candidate!
                 .handle((response, throwable) -> {
                     LOGGER.debug("Post-processing request result (attempt: {}, response: {}, throwable: {})", attempt,
                             response, throwable == null ? null : throwable.getClass());
+                    Optional<InputStream> payloadStream = request.getPayload().map(Payload::getContent);
                     boolean shouldRetry = retryPolicy.shouldRetry(response, throwable, attempt);
                     // todo dirty code
-                    boolean mayRetry = request.getPayload()
-                            .map(p -> p.getContent() instanceof ByteArrayInputStream)
-                            .orElse(false);
-                    if (shouldRetry && request.getAction().isIdempotent() && mayRetry) {
-                        if (request.getPayload() != null) {
-                            LOGGER.debug("Resetting payload input stream");
-                            //noinspection OptionalGetWithoutIsPresent
-                            ((ByteArrayInputStream) request.getPayload().get().getContent()).reset();
+                    if (shouldRetry && request.getAction().isIdempotent()) {
+                        boolean mayRetry = true;
+                        if (payloadStream.isPresent()) {
+                            LOGGER.debug("Request contains payload, trying to reset it");
+                            try {
+                                payloadStream.get().reset();
+                                payloadStream.get().mark(inputStreamMarkLimit);
+                            } catch (IOException e) {
+                                mayRetry = false;
+                            }
                         }
-                        long delay = retryPolicy.calculateDelay(attempt + 1);
-                        LOGGER.debug("Retry policy ordered to perform another attempt with delay of {} ms, retrying",
-                                delay);
-                        return delayService
-                                .await(retryPolicy.calculateDelay(attempt + 1), TimeUnit.MILLISECONDS)
-                                .thenCompose(v -> executeInternal(request, trace, attempt + 1));
+                        if (mayRetry) {
+                            long delay = retryPolicy.calculateDelay(attempt + 1);
+                            LOGGER.debug("Retry policy ordered to perform another attempt with delay of {} ms, " +
+                                    "retrying", delay);
+                            return delayService
+                                    .await(retryPolicy.calculateDelay(attempt + 1), TimeUnit.MILLISECONDS)
+                                    .thenCompose(v -> executeInternal(request, trace, attempt + 1));
+                        } else {
+                            LOGGER.debug("Retry policy allowed to retry, but provided payload contains input stream " +
+                                    "that may not be reset; returning results early");
+                        }
                     } else if (!request.getAction().isIdempotent()) {
                         LOGGER.debug("Retry policy allowed to retry, but request action is not idempotent, returning " +
                                 "results");
-                    } else if (!mayRetry) {
-                        LOGGER.debug("Retry policy allowed to retry, but provided payload contains input stream that " +
-                                "may not be reset; returning results early");
                     } else {
                         LOGGER.debug("Retry policy ordered to proceed with current results");
                     }

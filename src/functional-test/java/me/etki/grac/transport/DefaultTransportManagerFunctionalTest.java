@@ -49,7 +49,7 @@ public class DefaultTransportManagerFunctionalTest {
 
         ServerRegistry servers = ServerRegistries.localhost();
 
-        TransportManager transportManager = new DefaultTransportManager(servers, executor, delayService);
+        TransportManager transportManager = manager(servers, executor, delayService);
         TransportRequest request = Requests
                 .transport(Action.READ, "/test", 1000L)
                 .setRetryPolicy(retryPolicy);
@@ -77,7 +77,7 @@ public class DefaultTransportManagerFunctionalTest {
 
         ServerRegistry servers = ServerRegistries.localhost();
 
-        TransportManager transportManager = new DefaultTransportManager(servers, executor, delayService);
+        TransportManager transportManager = manager(servers, executor, delayService);
 
         TransportRequest request = Requests.transport(Action.CREATE, "/test", 1000L);
 
@@ -86,5 +86,13 @@ public class DefaultTransportManagerFunctionalTest {
         assertTrue(response.isCompletedExceptionally());
 
         verify(executor, times(1)).execute(any());
+    }
+
+    private static DefaultTransportManager manager(
+            ServerRegistry servers,
+            TransportRequestExecutor executor,
+            DelayService delayService) {
+
+        return new DefaultTransportManager(servers, executor, delayService, 32768);
     }
 }

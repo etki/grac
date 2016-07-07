@@ -31,6 +31,7 @@ public class SharedDefaults {
             .setRetryPolicy(DEFAULT_RETRY_POLICY)
             .setAcceptedMimeTypes(Collections.emptyList())
             .setFallbackObjectTypes(Collections.emptyList());
+    public static final int DEFAULT_INPUT_STREAM_MARK_LIMIT = 32768;
 
     private static volatile DefaultScheduledExecutor scheduler;
 

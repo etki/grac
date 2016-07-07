@@ -13,7 +13,9 @@ import me.etki.grac.concurrent.DefaultTimeoutService;
 import me.etki.grac.concurrent.DelayService;
 import me.etki.grac.concurrent.ScheduledExecutor;
 import me.etki.grac.concurrent.TimeoutService;
+import me.etki.grac.io.CachingInputStreamWrapperFactory;
 import me.etki.grac.io.DefaultSerializationManager;
+import me.etki.grac.io.MarkResetStreamWrapperFactory;
 import me.etki.grac.io.Serializer;
 import me.etki.grac.io.SynchronousSerializationManager;
 import me.etki.grac.policy.LoadBalancingPolicy;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,6 +71,9 @@ public class ClientBuilder {
     private boolean throwOnInvalidResponsePayloadType = true;
     private long defaultTimeout = SharedDefaults.DEFAULT_REQUEST_TIMEOUT;
     private String clientIdentifier = SharedDefaults.DEFAULT_CLIENT_IDENTIFIER;
+    private Supplier<MarkResetStreamWrapperFactory> markResetStreamWrapperFactory
+            = CachingInputStreamWrapperFactory::new;
+    private int inputStreamMarkLimit = SharedDefaults.DEFAULT_INPUT_STREAM_MARK_LIMIT;
 
     public ClientBuilder() {
         withDefaults();
@@ -315,6 +321,16 @@ public class ClientBuilder {
         return this;
     }
 
+    public ClientBuilder withMarkResetStreamWrapperFactory(Supplier<MarkResetStreamWrapperFactory> factory) {
+        Objects.requireNonNull(factory);
+        markResetStreamWrapperFactory = factory;
+        return this;
+    }
+
+    public ClientBuilder withMarkResetStreamWrapperFactory(MarkResetStreamWrapperFactory factory) {
+        return withMarkResetStreamWrapperFactory(() -> factory);
+    }
+
     public Client build() {
         LOGGER.debug("Building client");
         Stopwatch timer = Stopwatch.createStarted();
@@ -376,6 +392,12 @@ public class ClientBuilder {
     }
 
     private SynchronousSerializationManager constructSerializationManager() {
+        MarkResetStreamWrapperFactory factory = markResetStreamWrapperFactory.get();
+        if (factory == null) {
+            LOGGER.warn("No mark/reset stream wrapper factory specified; that means payload-based requests won't be " +
+                    "retried, and multi-variant deserialization won't be possible");
+            factory = stream -> stream;
+        }
         List<Serializer> serializers = this.serializers.stream()
                 .map(Supplier::get)
                 .filter(serializer -> {
@@ -391,7 +413,7 @@ public class ClientBuilder {
                     "byte arrays and input streams as target type), but highly undesirable and probably " +
                     "indicates an error.");
         }
-        return new DefaultSerializationManager(serializers);
+        return new DefaultSerializationManager(serializers, factory, inputStreamMarkLimit);
     }
 
     private TransportManager constructTransportManager() {
@@ -402,7 +424,7 @@ public class ClientBuilder {
         TransportRegistry transports = constructTransportRegistry();
         ServerRegistry servers = constructServerRegistry(transports);
         TransportRequestExecutor requestExecutor = constructTransportRequestExecutor(transports, scheduledExecutor);
-        return new DefaultTransportManager(servers, requestExecutor, delayService);
+        return new DefaultTransportManager(servers, requestExecutor, delayService, inputStreamMarkLimit);
     }
 
     private TransportRequestExecutor constructTransportRequestExecutor(

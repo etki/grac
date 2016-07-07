@@ -10,6 +10,8 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -50,7 +52,9 @@ public class DefaultSerializationManagerFunctionalTest {
 
     @Test
     public void shouldNotCallSerializersOnByteArraySerialization() throws Exception {
-        SerializationResult result = new DefaultSerializationManager(serializerMock)
+        Serializer serializer = serializerMock();
+
+        SerializationResult result = manager(serializer)
                 .serialize(NORMAL_STREAM_SOURCE, MediaType.OCTET_STREAM);
 
         assertNotNull(result.getContent());
@@ -63,7 +67,9 @@ public class DefaultSerializationManagerFunctionalTest {
 
     @Test
     public void shouldNotCallSerializersOnDeserializationToByteArray() throws Exception {
-        DeserializationResult<byte[]> result = new DefaultSerializationManager(serializerMock)
+        Serializer serializer = serializerMock();
+
+        DeserializationResult<byte[]> result = manager(serializer)
                 .deserialize(NORMAL_STREAM, MediaType.OCTET_STREAM, BYTE_ARRAY_TYPE);
 
         assertTrue(result.getResult().isPresent());
@@ -74,11 +80,13 @@ public class DefaultSerializationManagerFunctionalTest {
 
     @Test
     public void shouldNotCallSerializersOnInputStreamSerialization() throws Exception {
-        SerializationResult result = new DefaultSerializationManager(serializerMock)
+        Serializer serializer = serializerMock();
+
+        SerializationResult result = manager(serializer)
                 .serialize(NORMAL_STREAM, MediaType.OCTET_STREAM);
 
         assertNotNull(result.getContent());
-        assertEquals(NORMAL_STREAM, result.getContent());
+        // not verifying stream equality since it should be wrapped with caching wrapper
 
         verify(serializerMock, times(0)).serialize(any(), any());
     }
@@ -87,7 +95,7 @@ public class DefaultSerializationManagerFunctionalTest {
     public void shouldNotCallSerializersOnDeserializationToInputStream() throws Exception {
         Serializer serializer = serializerMock();
 
-        DeserializationResult<InputStream> result = new DefaultSerializationManager(serializer)
+        DeserializationResult<InputStream> result = manager(serializer)
                 .deserialize(NORMAL_STREAM, MediaType.OCTET_STREAM, INPUT_STREAM_TYPE);
         assertTrue(result.getResult().isPresent());
         assertEquals(NORMAL_STREAM, result.getResult().get());
@@ -99,7 +107,7 @@ public class DefaultSerializationManagerFunctionalTest {
     public void shouldNotCallSerializersOnNullSerialization() throws Exception {
         Serializer serializer = serializerMock();
 
-        SerializationResult result = new DefaultSerializationManager(serializer)
+        SerializationResult result = manager(serializer)
                 .serialize(null, MediaType.OCTET_STREAM);
         assertNull(result.getContent());
 
@@ -110,7 +118,7 @@ public class DefaultSerializationManagerFunctionalTest {
     public void shouldNotCallSerializersOnNullDeserialization() throws Exception {
         Serializer serializer = serializerMock();
 
-        DeserializationResult<Integer> result = new DefaultSerializationManager(serializer)
+        DeserializationResult<Integer> result = manager(serializer)
                 .deserialize(null, MediaType.OCTET_STREAM, INTEGER_TYPE);
         assertFalse(result.getResult().isPresent());
         assertFalse(result.getAltResult().isPresent());
@@ -122,7 +130,7 @@ public class DefaultSerializationManagerFunctionalTest {
     public void shouldNotCallSerializersOnEmptyStreamDeserialization() throws Exception {
         Serializer serializer = serializerMock();
 
-        DeserializationResult<Integer> result = new DefaultSerializationManager(serializer)
+        DeserializationResult<Integer> result = manager(serializer)
                 .deserialize(EMPTY_STREAM, MediaType.OCTET_STREAM, INTEGER_TYPE);
         assertFalse(result.getResult().isPresent());
         assertFalse(result.getAltResult().isPresent());
@@ -136,5 +144,10 @@ public class DefaultSerializationManagerFunctionalTest {
         when(serializer.serialize(any(), any())).thenReturn(null);
         when(serializer.deserialize(any(), any(), any())).thenReturn(null);
         return serializer;
+    }
+
+    private static DefaultSerializationManager manager(Serializer serializer) {
+        List<Serializer> serializers = Collections.singletonList(serializer);
+        return new DefaultSerializationManager(serializers, new CachingInputStreamWrapperFactory(), 32768);
     }
 }

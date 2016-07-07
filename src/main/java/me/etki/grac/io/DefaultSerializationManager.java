@@ -12,7 +12,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,24 +27,31 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSerializationManager.class);
 
     private final List<Serializer> serializers;
+    private final MarkResetStreamWrapperFactory wrapperFactory;
+    private final int markLimit;
 
-    public DefaultSerializationManager(List<Serializer> serializers) {
+    public DefaultSerializationManager(List<Serializer> serializers, MarkResetStreamWrapperFactory wrapperFactory, int markLimit) {
         this.serializers = serializers;
-    }
-
-    public DefaultSerializationManager(Serializer... serializers) {
-        this(Arrays.asList(serializers));
+        this.wrapperFactory = wrapperFactory;
+        this.markLimit = markLimit;
     }
 
     public <T> SerializationResult serialize(T payload, MediaType mimeType) throws IOException, SerializationException {
         SerializationResult result = checkEarlySerializationOptions(payload, mimeType);
         if (result != null) {
+            if (result.getContent() != null) {
+                result.setContent(wrapperFactory.wrap(result.getContent()));
+            }
             return result;
         }
         List<SerializationException> exceptionStack = new ArrayList<>();
         for (Serializer serializer : getApplicableSerializers(mimeType)) {
             try {
-                return serializer.serialize(payload, mimeType);
+                result = serializer.serialize(payload, mimeType);
+                if (result.getContent() != null) {
+                    result.setContent(wrapperFactory.wrap(result.getContent()));
+                }
+                return result;
             } catch (SerializationException e) {
                 exceptionStack.add(e);
             }
@@ -67,6 +73,8 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
             LOGGER.debug("Null payload provided, short-circuiting");
             return DeserializationResult.normal(null);
         }
+        stream = wrapperFactory.wrap(stream);
+        // todo do not convert to bytes
         byte[] data = extractStream(stream);
         DeserializationResult<T> earlyResult = checkEarlyDeserializationOptions(data, expectedType);
         if (earlyResult != null) {
@@ -118,12 +126,7 @@ public class DefaultSerializationManager implements SynchronousSerializationMana
     }
 
     private byte[] extractStream(InputStream stream) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream() {
-            @Override
-            public synchronized byte[] toByteArray() {
-                return buf;
-            }
-        };
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int bytesRead;
         while ((bytesRead = stream.read(buffer)) != -1) {
