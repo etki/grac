@@ -32,6 +32,10 @@ public class JacksonSerializer implements Serializer {
         this.objectMapper = objectMapper;
     }
 
+    public JacksonSerializer() {
+        this(new ObjectMapper());
+    }
+
     @Override
     public <T> T deserialize(InputStream data, MediaType mimeType, TypeSpec type)
             throws IOException, SerializationException {

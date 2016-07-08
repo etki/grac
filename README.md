@@ -1,24 +1,51 @@
 # Generic REST API Client
 
+[![Build Status](https://travis-ci.org/etki/grac.svg?branch=dev)](https://travis-ci.org/etki/grac)
+
 This project aims to provide simple (not fit-all-cases) asynchronous 
 REST API client that may help in bootstrapping common situations. 
+
+GRAC is being developed as a response to challenges presented by
+microservice architecture:
+
+- REST is a simple concept of request-response interaction, several 
+fixed actions (create, read, replace, modify and delete), optional
+metadata and optional payload, which can be either object representation
+or typeless LOB byte stream.
+- Application API may consist of dynamically changed several servers, 
+probably exposed via different transports (e.g. http and https)
+- It is hard to think about traditional synchronous architecture in 
+high throughput applications, so you have to choose between async 
+execution and fiber-based architecture; this project chooses former 
+option and is based around promise-like `CompletableFuture`
+
+It is implied that single GRAC instance represents single application
+(that may be deployed as several instances); GRAC is not a traditional 
+HTTP client that may query anything, once GRAC is creataed, it is tied
+to pool of servers (that may be dynamic or consist of single instance).
+If you need to query several applications, you need to have a copy of
+GRAC for every of them (they, however, can share serializers and 
+transports).
 
 ## Traditional "get started" quickie
 
 ```
-ServerAddressProvider serverAddressProvider = new FixedServerProvider(new ServerAddressContainer("http", "127.0.0.1", 80));
+ServerProvider serverProvider = new FixedServerProvider(new ServerContainer("http", "127.0.0.1", 80));
 Client client = new ClientBuilder()
         .withServerAddressProvider(serverAddressProvider)
+        .withTransport(new AsyncHttpClientTransport())
+        .withSerializer(new JacksonSerializer())
         .build();
-TypeSpec expectedType = new TypeSpec(Map.class, String.class, Integer.class);
-CompletableFuture<Response<Map<String, Integer>>> future = client.read("metric", expectedType);
+TypeSpec expectedType = new TypeSpec(MetricReport.class);
+CompletableFuture<Response<MetricReport>> future = client.<MetricReport>read("metric", expectedType);
 ```
 
 ## Principles
 
 This client tries to be transport-agnostic (even though i know you'll 
 use HTTP/1.1), so all requests are basically reduced to simple structure
-of resource path, action, payload (stream, stream length, mime type) and 
+of resource path, action, payload (stream, stream length, mime type),
+request parameters (that's query string in common case) and 
 metadata (headers in HTTP realm). The client itself may be divided in
 three main components: transport (responsible for delivering message and
 getting response), serialization (responsible for converting streams 
