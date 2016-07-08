@@ -8,8 +8,12 @@ cache:
 before_script:
   - git clone https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
   - gradle -p /tmp/dummy-api-server bootRepackage
-  - java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar
+  - java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar &
+  - echo $! > /tmp/dummy-api-server.pid
+  - sleep 15
 script:
   - gradle -version
   - gradle test
   - gradle acceptanceTest
+after_script:
+  - kill $(cat /tmp/dummy-api-server.pid)
