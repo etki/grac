@@ -1,6 +1,10 @@
 language: java
 jdk:
   - oraclejdk8
+before_script:
+  - git checkout https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
+  - gradle -p /tmp/dummy-api-server jar
+  - java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar
 script:
   - gradle -version
   - gradle test
