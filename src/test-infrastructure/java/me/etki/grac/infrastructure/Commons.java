@@ -15,7 +15,7 @@ import java.net.InetSocketAddress;
 public class Commons {
 
     public static final Server LOCALHOST = new ServerContainer(new InetSocketAddress("localhost", 80), "http");
-    public static final Server GITHUB_HOST = new ServerContainer(new InetSocketAddress("api.github.com", 80), "https");
+    public static final Server GITHUB_HOST = new ServerContainer(new InetSocketAddress("api.github.com", 443), "https");
 
     public static final MediaType DEFAULT_MIME_TYPE = JavaNativeSerializer.MIME_TYPE;
 }

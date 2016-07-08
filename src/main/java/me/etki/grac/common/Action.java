@@ -7,6 +7,9 @@ package me.etki.grac.common;
  */
 public enum Action {
 
+    // basically this would be 'read metadata', but i found that inappropriate
+    // warning: this particular action may be removed in future releases
+    INSPECT (true),
     READ (true),
     CREATE (false),
     SET (true),

@@ -83,36 +83,42 @@ public class RequestOptions {
         this.clientIdentifier = clientIdentifier;
         return this;
     }
-
-    public RequestOptions copy() {
+    
+    public static RequestOptions copy(RequestOptions source) {
         return new RequestOptions()
-                .setRetryPolicy(retryPolicy)
-                .setAcceptedMimeTypes(acceptedMimeTypes)
-                .setAcceptedLocales(acceptedLocales)
-                .setFallbackObjectTypes(fallbackObjectTypes)
-                .setTimeout(timeout);
+                .setRetryPolicy(source.getRetryPolicy())
+                .setSerializationType(source.getSerializationType())
+                .setAcceptedMimeTypes(source.getAcceptedMimeTypes())
+                .setAcceptedLocales(source.getAcceptedLocales())
+                .setFallbackObjectTypes(source.getFallbackObjectTypes())
+                .setTimeout(source.getTimeout())
+                .setClientIdentifier(source.getClientIdentifier());
     }
 
-    public static RequestOptions merge(RequestOptions target, RequestOptions source) {
-
-        if (target.getRetryPolicy() == null) {
-            target.setRetryPolicy(source.getRetryPolicy());
+    public static RequestOptions merge(RequestOptions a, RequestOptions b) {
+        
+        RequestOptions result = copy(a);
+        if (result.getRetryPolicy() == null) {
+            result.setRetryPolicy(b.getRetryPolicy());
         }
-        if (target.getAcceptedMimeTypes() == null) {
-            target.setAcceptedMimeTypes(source.getAcceptedMimeTypes());
+        if (result.getSerializationType() == null) {
+            result.setSerializationType(b.getSerializationType());
         }
-        if (target.getAcceptedLocales() == null) {
-            target.setAcceptedLocales(source.getAcceptedLocales());
+        if (result.getAcceptedMimeTypes() == null) {
+            result.setAcceptedMimeTypes(b.getAcceptedMimeTypes());
         }
-        if (target.getTimeout() == null) {
-            target.setTimeout(source.getTimeout());
+        if (result.getAcceptedLocales() == null) {
+            result.setAcceptedLocales(b.getAcceptedLocales());
         }
-        if (target.getFallbackObjectTypes() == null) {
-            target.setFallbackObjectTypes(source.getFallbackObjectTypes());
+        if (result.getFallbackObjectTypes() == null) {
+            result.setFallbackObjectTypes(b.getFallbackObjectTypes());
         }
-        if (target.getSerializationType() == null) {
-            target.setSerializationType(source.getSerializationType());
+        if (result.getTimeout() == null) {
+            result.setTimeout(b.getTimeout());
         }
-        return target;
+        if (result.getClientIdentifier() == null) {
+            result.setClientIdentifier(b.getClientIdentifier());
+        }
+        return result;
     }
 }

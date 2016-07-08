@@ -31,6 +31,10 @@ public class ServerProviders {
         return of(Servers.localhost());
     }
 
+    public static ServerProvider dummyApiServer() {
+        return of(Servers.localHttp(8080));
+    }
+
     public static ServerProvider github() {
         return of(Servers.github());
     }

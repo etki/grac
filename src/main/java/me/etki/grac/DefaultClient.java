@@ -44,9 +44,9 @@ public class DefaultClient implements Client {
     }
 
     public <I, O> CompletableFuture<Response<O>> execute(Request<I> request, TypeSpec expectedType,
-                                                                 RequestOptions options) {
+                                                         RequestOptions options) {
 
-        RequestOptions requestOptions = RequestOptions.merge(options.copy(), defaultRequestOptions);
+        RequestOptions requestOptions = RequestOptions.merge(options, defaultRequestOptions);
         ApplicationRequest<I> applicationRequest = assembleRequest(request, expectedType, requestOptions);
         return client
                 .<I, O>execute(applicationRequest)

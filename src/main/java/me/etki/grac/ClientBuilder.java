@@ -27,6 +27,7 @@ import me.etki.grac.transport.TransportManager;
 import me.etki.grac.transport.TransportRegistry;
 import me.etki.grac.transport.TransportRequestExecutor;
 import me.etki.grac.transport.server.DefaultServerRegistry;
+import me.etki.grac.transport.server.Server;
 import me.etki.grac.transport.server.ServerProvider;
 import me.etki.grac.transport.server.ServerRegistry;
 import me.etki.grac.utility.StaticValidator;
@@ -60,9 +61,13 @@ public class ClientBuilder {
     private Supplier<ScheduledExecutor> scheduler = SharedDefaults::getDefaultScheduler;
     private Supplier<Executor> responseProcessingExecutor = SharedDefaults::getDefaultExecutor;
     private ServerProvider serverProvider;
+    // todo: add possibility to set up fixed server provider just by specifying list of servers.
+    private List<Server> servers = new ArrayList<>();
     private RetryPolicy retryPolicy = SharedDefaults.DEFAULT_RETRY_POLICY;
     private LoadBalancingPolicy loadBalancingPolicy = SharedDefaults.DEFAULT_LOAD_BALANCING_POLICY;
     private MediaType defaultSerializationType = SharedDefaults.JSON_MIME_TYPE;
+    // todo: add default content-type so servers wouldn't necessarily have to specify it
+    private MediaType defaultIncomingMimeType = SharedDefaults.JSON_MIME_TYPE;
     private List<MediaType> acceptedMimeTypes = new ArrayList<>();
     private List<TypeSpec> fallbackObjectTypes = new ArrayList<>();
     private List<String> acceptedLocales = new ArrayList<>();
@@ -74,6 +79,10 @@ public class ClientBuilder {
     private Supplier<MarkResetStreamWrapperFactory> markResetStreamWrapperFactory
             = CachingInputStreamWrapperFactory::new;
     private int inputStreamMarkLimit = SharedDefaults.DEFAULT_INPUT_STREAM_MARK_LIMIT;
+
+    // todo add upper bounds on submitted requests and concurrently executed requests
+    private int requestQueueSize = SharedDefaults.DEFAULT_REQUEST_QUEUE_SIZE;
+    private int concurrentRequestLimit = SharedDefaults.DEFAULT_CONCURRENT_REQUEST_LIMIT;
 
     public ClientBuilder() {
         withDefaults();
@@ -242,6 +251,10 @@ public class ClientBuilder {
     public ClientBuilder withDefaultSerializationType(MediaType serializationType) {
         defaultSerializationType = serializationType;
         return this;
+    }
+
+    public ClientBuilder withoutDefaultSerializationType() {
+        return withDefaultSerializationType(null);
     }
     
     public ClientBuilder withFallbackType(TypeSpec type) {

@@ -7,11 +7,15 @@ import me.etki.grac.transport.ServerRequest;
 import me.etki.grac.transport.ServerResponse;
 import me.etki.grac.transport.Transport;
 import me.etki.grac.transport.TransportRegistry;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -56,5 +60,15 @@ public class Transports {
 
     public static Transport mirror() {
         return mirror(ResponseStatus.OK);
+    }
+
+    public static Transport mock() {
+        return Mockito.mock(Transport.class);
+    }
+
+    public static Transport mockForAnyProtocol() {
+        Transport transport = mock();
+        when(transport.supports(any())).thenReturn(true);
+        return transport;
     }
 }

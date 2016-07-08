@@ -20,7 +20,7 @@ public class DefaultTimeoutService implements TimeoutService {
     @Override
     public <T> CompletableFuture<Void> setTimeout(CompletableFuture<T> future, long delay, TimeUnit unit) {
         return executor.schedule(() -> {
-            String message = "CompletableFuture has timed out after delay of " + delay + " " + unit;
+            String message = "CompletableFuture has timed out after delay of " + delay + " " + unit.toString();
             future.completeExceptionally(new TimeoutException(message));
         }, delay, unit);
     }

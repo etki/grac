@@ -3,6 +3,7 @@ package me.etki.grac.client;
 import me.etki.grac.Client;
 import me.etki.grac.ClientBuilder;
 import me.etki.grac.Response;
+import me.etki.grac.concurrent.CompletableFutures;
 import me.etki.grac.implementation.serializer.JavaNativeSerializer;
 import me.etki.grac.infrastructure.Responses;
 import me.etki.grac.infrastructure.ServerProviders;
@@ -11,9 +12,12 @@ import me.etki.grac.io.SerializationResult;
 import me.etki.grac.io.Serializer;
 import me.etki.grac.transport.Payload;
 import me.etki.grac.transport.ResponseStatus;
+import me.etki.grac.transport.ServerRequest;
+import me.etki.grac.transport.ServerResponse;
 import me.etki.grac.transport.Transport;
 import me.etki.grac.utility.TypeSpec;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +25,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Etki {@literal <etki@etki.name>}
@@ -53,5 +58,24 @@ public class ClientFunctionalTest {
         Optional<Map<String, Object>> result = response.getResult();
         assertTrue(result.isPresent());
         assertEquals(value, result.get());
+    }
+
+    @Test
+    public void shouldCorrectlyPassClientIdentifier() throws Exception {
+        String identifier = "GRAC";
+        Transport transport = Transports.mockForAnyProtocol();
+        ArgumentCaptor<ServerRequest> captor = ArgumentCaptor.forClass(ServerRequest.class);
+        when(transport.execute(captor.capture()))
+                .thenReturn(CompletableFutures.completed(new ServerResponse().setStatus(ResponseStatus.OK)));
+        new ClientBuilder()
+                .withTransport(transport)
+                .withServiceAddressProvider(ServerProviders.localhost())
+                .withClientIdentifier(identifier)
+                .build()
+                .read("/test", new TypeSpec(Void.class))
+                .get();
+        Optional<String> capturedIdentifier = captor.getValue().getClientIdentifier();
+        assertTrue(capturedIdentifier.isPresent());
+        assertEquals(identifier, capturedIdentifier.get());
     }
 }

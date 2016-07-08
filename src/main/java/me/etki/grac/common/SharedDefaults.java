@@ -32,6 +32,8 @@ public class SharedDefaults {
             .setAcceptedMimeTypes(Collections.emptyList())
             .setFallbackObjectTypes(Collections.emptyList());
     public static final int DEFAULT_INPUT_STREAM_MARK_LIMIT = 32768;
+    public static final int DEFAULT_REQUEST_QUEUE_SIZE = 200;
+    public static final int DEFAULT_CONCURRENT_REQUEST_LIMIT = 20;
 
     private static volatile DefaultScheduledExecutor scheduler;
 
