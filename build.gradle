@@ -2,12 +2,42 @@ group 'me.etki'
 version '0.1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenLocal()
     mavenCentral()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+        mavenSources(MavenPublication) {
+            artifact sourcesJar
+        }
+        mavenJavadoc(MavenPublication) {
+            artifact javadocJar
+        }
+    }
+    repositories {
+        if (project.hasProperty('gracRepositoryUrl') &&
+                project.hasProperty('gracRepositoryLogin') &&
+                project.hasProperty('gracRepositoryPassword')) {
+
+            System.out.println('Setting up custom repository')
+            maven {
+                url gracRepositoryUrl
+                credentials {
+                    username = gracRepositoryLogin
+                    password = gracRepositoryPassword
+                }
+            }
+        }
+    }
 }
 
 sourceSets {
@@ -56,6 +86,16 @@ sourceSets {
         compileClasspath += test.compileClasspath
         runtimeClasspath += test.runtimeClasspath
     }
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 ['unit', 'functional', 'system', 'integration', 'stress'].each { testType ->

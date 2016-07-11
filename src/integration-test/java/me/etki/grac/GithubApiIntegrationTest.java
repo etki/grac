@@ -26,7 +26,7 @@ public class GithubApiIntegrationTest {
     public void shouldPullGithubOrganizations() throws Exception {
         Client client = new ClientBuilder()
                 .withTransport(new AsyncHttpClientTransport())
-                .withServiceAddressProvider(ServerProviders.github())
+                .withServerProvider(ServerProviders.github())
                 .withSerializer(new JacksonSerializer(new ObjectMapper()))
                 .withAcceptedLocale("en")
                 .withDefaultAcceptedType(MediaType.JSON_UTF_8)

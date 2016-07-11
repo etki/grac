@@ -46,7 +46,7 @@ public class DummyApiServerIntegrationTest {
                 .withTransport(new AsyncHttpClientTransport(new DefaultAsyncHttpClient()))
                 .withSerializer(new JacksonSerializer(new ObjectMapper()))
                 .withDefaultSerializationType(MediaType.JSON_UTF_8)
-                .withServiceAddressProvider(ServerProviders.dummyApiServer())
+                .withServerProvider(ServerProviders.dummyApiServer())
                 .build();
         TypeSpec typeSpec = new TypeSpec(List.class, new TypeSpec(User.class));
         Response<List<User>> response = client.<List<User>>read("/api/structure/user", typeSpec).get();
@@ -62,7 +62,7 @@ public class DummyApiServerIntegrationTest {
                 .withTransport(new AsyncHttpClientTransport(new DefaultAsyncHttpClient()))
                 .withSerializer(new JacksonSerializer(new ObjectMapper()))
                 .withDefaultSerializationType(MediaType.JSON_UTF_8)
-                .withServiceAddressProvider(ServerProviders.dummyApiServer())
+                .withServerProvider(ServerProviders.dummyApiServer())
                 .withFallbackType(JSON_PROBLEM_TYPE)
                 .shouldThrowOnInvalidResponsePayloadType(false)
                 .build();
@@ -119,7 +119,7 @@ public class DummyApiServerIntegrationTest {
                 .withTransport(new AsyncHttpClientTransport(new DefaultAsyncHttpClient()))
                 .withSerializer(new JacksonSerializer(new ObjectMapper()))
                 .withDefaultSerializationType(MediaType.JSON_UTF_8)
-                .withServiceAddressProvider(ServerProviders.dummyApiServer());
+                .withServerProvider(ServerProviders.dummyApiServer());
     }
     private static ClientBuilder fallbackAwareBuilder() {
         return builder()

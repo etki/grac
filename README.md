@@ -11,17 +11,17 @@ microservice architecture:
 - REST is a simple concept of request-response interaction, several 
 fixed actions (create, read, replace, modify and delete), optional
 metadata and optional payload, which can be either object representation
-or typeless LOB byte stream.
+or typeless BLOB byte stream.
 - Application API may consist of dynamically changed several servers, 
-probably exposed via different transports (e.g. http and https)
+probably exposed via different transports (e.g. http and https).
 - It is hard to think about traditional synchronous architecture in 
 high throughput applications, so you have to choose between async 
 execution and fiber-based architecture; this project chooses former 
-option and is based around promise-like `CompletableFuture`
+option and is based around promise-like `CompletableFuture`.
 
 It is implied that single GRAC instance represents single application
 (that may be deployed as several instances); GRAC is not a traditional 
-HTTP client that may query anything, once GRAC is creataed, it is tied
+HTTP client that may query anything, once GRAC is created, it is tied
 to pool of servers (that may be dynamic or consist of single instance).
 If you need to query several applications, you need to have a copy of
 GRAC for every of them (they, however, can share serializers and 
@@ -30,9 +30,9 @@ transports).
 ## Traditional "get started" quickie
 
 ```
-ServerProvider serverProvider = new FixedServerProvider(new ServerContainer("http", "127.0.0.1", 80));
+ServerProvider serverProvider = new ConstantServerProvider(new ServerContainer(new InetSocketAddress("localhost", 80), "http"));
 Client client = new ClientBuilder()
-        .withServerAddressProvider(serverAddressProvider)
+        .withServerProvider(serverProvider)
         .withTransport(new AsyncHttpClientTransport())
         .withSerializer(new JacksonSerializer())
         .build();
@@ -75,7 +75,10 @@ similar mechanism: iterates all registered serializers until it finds
 one that supports provided mime type, then it tries to deserialize 
 object of target type using that deserializer. If deserialization
 fails, client tries to deserialize one of fallback types, and then fails
-completely if this is not possible.
+completely if this is not possible. Serialization manager uses caching
+input stream under cover, so while smaller payload may easily fit into
+cache and reread using different serializer, bigger ones may be bigger
+than cache and result in applying only part of serializaers.
 
 On the last layer response object is assembled and returned to client 
 code, or, if client is configured to throw exception on client/server
@@ -90,6 +93,9 @@ not necessarily client error. The default behavior is to downgrade
 DELETE, otherwise it is kept intact and promoted to exception on 
 application layer. It is possible to change that behavior using 
 other-than-default interceptor.
+- The interface is not stable and may change from one minor release to
+another. It's almost certain that serialization manager will be
+rewritten, as well as return statuses scheme.
 
 ## Requirements
 

@@ -22,14 +22,14 @@ public class ClientBuilderFunctionalTest {
     @Test(expected = IllegalStateException.class)
     public void shouldNotCreateClientWithoutTransport() {
         new ClientBuilder()
-                .withServiceAddressProvider(ServerProviders.empty())
+                .withServerProvider(ServerProviders.empty())
                 .build();
     }
 
     @Test
     public void shouldSuccessfullyCreateWithOnlyTransportAndAddressProvider() {
         new ClientBuilder()
-                .withServiceAddressProvider(ServerProviders.empty())
+                .withServerProvider(ServerProviders.empty())
                 .withTransport(Transports.dummy())
                 .build();
     }

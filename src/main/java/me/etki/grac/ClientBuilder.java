@@ -228,7 +228,7 @@ public class ClientBuilder {
         return this;
     }
 
-    public ClientBuilder withServiceAddressProvider(ServerProvider provider) {
+    public ClientBuilder withServerProvider(ServerProvider provider) {
         serverProvider = provider;
         return this;
     }

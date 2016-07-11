@@ -16,11 +16,11 @@ import java.util.Collection;
 public class ClientBuilders {
 
     public static ClientBuilder localhost() {
-        return new ClientBuilder().withServiceAddressProvider(ServerProviders.localhost());
+        return new ClientBuilder().withServerProvider(ServerProviders.localhost());
     }
 
     public static ClientBuilder github() {
-        return new ClientBuilder().withServiceAddressProvider(ServerProviders.github());
+        return new ClientBuilder().withServerProvider(ServerProviders.github());
     }
 
     public static ClientBuilder regular(
@@ -29,7 +29,7 @@ public class ClientBuilders {
             Collection<Serializer> serializers) {
 
         return new ClientBuilder()
-                .withServiceAddressProvider(provider)
+                .withServerProvider(provider)
                 .withTransports(transports)
                 .withSerializers(serializers);
     }

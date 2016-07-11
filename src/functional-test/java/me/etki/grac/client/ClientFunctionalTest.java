@@ -48,7 +48,7 @@ public class ClientFunctionalTest {
         Transport transport = Transports.repeater(Responses.server(ResponseStatus.OK, responsePayload));
         Client client = new ClientBuilder()
                 .withTransport(transport)
-                .withServiceAddressProvider(ServerProviders.localhost())
+                .withServerProvider(ServerProviders.localhost())
                 .withSerializer(serializer)
                 .withDefaultSerializationType(JavaNativeSerializer.MIME_TYPE)
                 .build();
@@ -69,7 +69,7 @@ public class ClientFunctionalTest {
                 .thenReturn(CompletableFutures.completed(new ServerResponse().setStatus(ResponseStatus.OK)));
         new ClientBuilder()
                 .withTransport(transport)
-                .withServiceAddressProvider(ServerProviders.localhost())
+                .withServerProvider(ServerProviders.localhost())
                 .withClientIdentifier(identifier)
                 .build()
                 .read("/test", new TypeSpec(Void.class))
