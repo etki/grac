@@ -20,6 +20,5 @@ script:
   - gradle -version
   - gradle test
   - gradle acceptanceTest
-  - [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && gradle publish || echo 'Skipping publish due to pull request'
 after_script:
   - kill $(cat /tmp/dummy-api-server.pid)
