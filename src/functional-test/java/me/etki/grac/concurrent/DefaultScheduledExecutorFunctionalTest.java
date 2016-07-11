@@ -42,7 +42,7 @@ public class DefaultScheduledExecutorFunctionalTest {
         secondaryExecutorService = null;
     }
 
-    @Test(timeout = 1000)
+    @Test(timeout = 5000)
     public void shouldCorrectlyShutdown() {
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
         DefaultScheduledExecutor executor = new DefaultScheduledExecutor(scheduledExecutorService);
