@@ -40,7 +40,7 @@ public class JavaNativeSerializer implements Serializer {
     }
 
     @Override
-    public <T> SerializationResult serialize(T object, MediaType mediaType) throws IOException, SerializationException {
+    public <T> SerializationResult serialize(T object, MediaType mimeType) throws IOException, SerializationException {
         ByteArrayOutputStream output = new ByteArrayOutputStream() {
             @Override
             public synchronized byte[] toByteArray() {

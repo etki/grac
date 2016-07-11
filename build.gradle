@@ -24,16 +24,16 @@ publishing {
         }
     }
     repositories {
-        if (project.hasProperty('gracRepositoryUrl') &&
-                project.hasProperty('gracRepositoryLogin') &&
-                project.hasProperty('gracRepositoryPassword')) {
+        if (System.getenv('GRAC_PRIVATE_REPOSITORY_URL') != null &&
+                System.getenv('GRAC_PRIVATE_REPOSITORY_LOGIN') != null &&
+                System.getenv('GRAC_PRIVATE_REPOSITORY_PASSWORD') != null) {
 
             System.out.println('Setting up custom repository')
             maven {
-                url gracRepositoryUrl
+                url System.getenv('GRAC_PRIVATE_REPOSITORY_URL')
                 credentials {
-                    username = gracRepositoryLogin
-                    password = gracRepositoryPassword
+                    username = System.getenv('GRAC_PRIVATE_REPOSITORY_LOGIN')
+                    password = System.getenv('GRAC_PRIVATE_REPOSITORY_PASSWORD')
                 }
             }
         }

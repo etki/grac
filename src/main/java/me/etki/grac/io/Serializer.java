@@ -40,12 +40,13 @@ public interface Serializer {
      * Serializes arbitrary object.
      *
      * @param object Object to be serialized.
+     * @param mimeType Mime type for object to be serialized in.
      * @param <T> Object type.
      * @return Serialized object as a wrapped input stream.
      * @throws IOException Thrown in case of I/O errors
      * @throws SerializationException Thrown in case serializer can't serialize this specific instance
      */
-    <T> SerializationResult serialize(T object, MediaType mediaType) throws IOException, SerializationException;
+    <T> SerializationResult serialize(T object, MediaType mimeType) throws IOException, SerializationException;
 
     boolean supports(MediaType mediaType);
 }
