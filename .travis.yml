@@ -1,26 +1,27 @@
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 env:
   global:
-    - secure: "n22q430GBtgZ4yR0BhKXuP+mrdv4QIQGO8uoM9Og1Orv8qdDJQWY94NB/d+ZrzfPZmBNnjFpRbCWBnTB3JRRtUl/WvvFQiWEkEe4x+ec/KdYPhg0tNScBeokoC9hT+OZUnO8gSj/4zfVegV2fEb7s6htkpt+c3mFHPz7v/ypUe9TB2ck/06dPuuiWEiwihSs63J+C0CC6vwF6dWrBnMUe6rs19O6TSCJZ1KhUwLbtoARHesgMY65lPFnqGOI874WCTcKBwN1PT1AIwSrdwxQozdvtxGCBt+w4rlISDQVgaHg0FK7Ij0vbmUKmrH0SmemzYXc2igDI+za4dvolVTNJ8nYsKQt54tFrAuM4zJpWkzdf6aUztFqxxfNjyLHbkjT91CaFUR3NDQ0LdxhbtZupe3T0/tkAPNQu72wrN+aQFU5zJdaJWpkB06mlsEusnLp1T+jo9ZlzwZb52G9SIG0y8BvdLHEHUx861YB8uc6br8m4rxCNpPQBDhaTm1sFVxLzxLoerNB20Q6oSQL9+IYuFaUvP1K19hB998e/r7Oe68bE3zzAbWN7ilyoK626p8YXq1HYA8n1tdKMKSPaNseJaFqPu1tOzjHiz5AunakFik8z7CQxO4t6KsTjwJn6FAa2b29jRz/Jyw8bVBuQglZAK/mJXlOcg3ebkXKHJvNBuo="
-    - secure: "gUZyFPklqxoKaU1vRLjNmdsqv2pvmyQkPVJZU/dYTruFJgKtZkrK1WnBAa0MyaOsRbQC6TWNzunVEo4QLlG/F9NrQ0mpFGIcZ6zU/y+tdULJubdXATn0RdA8EqxH4lY0/D2CUJyqGfeHii59/dG33K/H1OkqyY9CZ4OhLFCur4rcR/6CtdQSIv496x6bKGJP+sjNpxJ8+6Ct22pcof6YAASuBX0JodHRDmQlSJcb710OWgL6BSzywgyALysFMz0pe/jHq9COBuLQ2bfcvZOT3GF4+n1DPw9p9+TxcUsgwWPjDhT19V472smdNH+dbHog1FEKsg7vVZNDfNMrEDxbqxdku4c/hg+EEAA1vbqH1P/KxBtdMXifMqnmMMBfQ/1MFM3OqAaj01/HVlkpgp0lAWQUGMVLkT16S17vZpBBFohuXteptO/5psypxu0pfI0kkgIZfwISEr5IICfX2/pDlBbfPXuWh+sshI8ctaMlYtRV2ScRDbsxjL8pVIxX37LE0nqVUTVFTrEo6tfxuANnleTyxGHUxxQ+YQH1kuWfz8uqJ5er/kjRWkHxy+kL5zlru+a641JUaYw9V2zJNeT2R4sLdKxQDNdFu09LhyuR84H5ZPfPCHZdOgylGHNN+ZTcdz7I4poqK3k/yy2YVgeOTKsoSCNxAgYR9p1nR6ficW8="
-    - secure: "rP9Gfzv/IK/spllwibZ5KYHqavYHsPJYjqHRBjtp+1xBRLtNqa3gxS57eUODCxQ0kn3jRdDMUFedBY8HV6AR9Z2i/TeNlSMSCOdvtri8TuAaq7XOPRTzj4kM9Lt9j7VcuoPBmtuASVYm06qtu49W8C5QSH07KRFdX5hqcvdFxpqjdfH7XVuYLaWasDGOCrQvF2Hz+FTz+a4KcrNz2fOsgXUI01niJWRX21etIuW1xTmsEpOsSCaJ61ejknQCvmWG0sBLVCiX8pmkeaV/PRcfhEUMPQfeOHcAEO9VGfFuo0PhQygt9KakOdpjcsY6gAOC2KNQnhHqvrivhy9c1jEdqLmxHwey1zAie026404MA3Z56bi8U0/tXbMeaVHD62P9pdG4VD0LIXAX9mDxhoCVGFGojNhV1DST9EKxYae+P6YH2v3hxB16TFTn7rGMSHqz8QwBupQG+AIGaj0RRfu8D3El6DLXoDApq4G1IiB9HUfSFhUA11s9Ip5Fwu++qwQSB5HuBAubi7I44bK0lQsypm57ftUMdsLt+O//go1g1WAAl52a2WvR7gUdpVh44pBs+ca97gSGw83AqQWfbUkPVcZh4Yf9ac++0wvn4oCWogPig+SrGLnZgW8Zb8uedckmeEN1BeqU971AkMAekhDitHuN8Xhp4VPOigTZXjZ1juY="
+  - secure: UijtTjeyfYG94qzwxIouDWvPS+gohb0db3/4wQg/Vs7qL2xLOZtywYXVe4Mefnp+meoy2/5XXDul6xQavCILVzYjbha89S9MHXJNyor64kv66R4toX1F//RLt69a1IlfdUoGB1JyoOrC50P2Hy1SEJ4L9g6YPKuMxAbkM7KG8FjsR/W3BxWCUD+Y1mFoIngzfg0+WyrXipBn9ue4egYoTrG+HvZRTufYzSLnK06KoizpUUKV31OUwmF7yHILlLUlTdaLOSgWXkpSEzwC1dCqXjo65rsV2dnq5Rpw/GZNQ7oiTLxxv2vzTcBcsxk7ry0WbeD4pxaGbQiGgmiYFL/k/1DIs1AgVcdCfrRrGGe/rYbm2s2p0VbwAsxQ1Mfr+B9wtN7iLp/RX3R2jG4YSF6Pf6xtl5lMxfaDevR2wgN10BYCveHUC8cHYjP+FPmb0IAC5/HWKXWE+4YCV0fojhboXcDA6zcUjksz2mzRhasN5IcQFEb50WM/XgPhfSz+hywYJo/xAlTwrsE/OVJxzArulnRpJKccBuxZml+2itnDJcrFqQf9z1LckYWsOcXUHXwXZVJ5I68FQwJIA8inSG529BIDaP7/vTrNQveZ439hFQIdLrErUDJi9ex0MExPaNl3idzObxzPi+ZZXY5SrxQcQ6MEFtbfm5ljNuEFq12k870=
+  - secure: uyd3tE7MH3V+KkTX/c38ADDWOXmbtSS4GJuQvGE9ixbityE5sH/PkGi/fGcwbKWkLZpLxrlZFZKVnxNfHMAuX+kh47DqQyVLNLltg1e8+/rU4imPxod1esp6KbJpzqXy1W/NPQeksLgYX8ez2BYh3eDgLbm0G1N0Vs5ejk4KkrQsVR/DXDoZv5jiuqTJNr0Oyvi9hQ/dKR7QLQTJC3UyvPlEpzPw4FkEszVqqWrnnn6Mt5bhHg3zVlllfqmkZowRMKVyzhweAGa3fGgtGG0rGHpmg1nFc0iLybCyNMnb3bn+M2DX2LD4n/yof1Nt65rU41I4aJGMxK6k8NZcujxqnmZCImSK8UMcLABU6TmrW3UXMGdHu8YUu4D5xumoiNkFJ/r+H90lHrfx86ObVmdo6TFZXjnlHNt8N4gSX1rCUVqtck6lPAtNwfDLgNNxfohRfLHT1RHrKHvdcInclr9wKTSEpycPOQuDgIkrhsVypHLs7l6kObhyoTqDvZuq5Em9wokPl3dSyAdBKYhh7WJ3r6V3TvUGhdKmJEcx5U/mOIc3zFzK+P47P2go2kzgKSJzPA0eZT3QCkhJA/tcukVzw4ZGvW6l81W43oGz5RekDnKy5tyN6O0ELhPTokOhtpz/YqgRy39WGbEv9Aax7pbBlxU+dt/gs6+G2se9gPOx92M=
+  - secure: RCAbd0t72s7a8AsDo5bFJk9UDPJSHS9zKEqycu/BuCmvDvsoyy7deIb3Bjx9ZwiFX7Wob6FFFr7+GG/8wXknZ7DkApJNYMjuSm+USnWi6z3yg1uFQ3fOGeEvBM59q+jfW4HEgLvR0oI3mkgxKtm+j3ifVqcgvttdDw5GvBLHHWMsYmXKLBJdSrYmH+TJV5mxEXxLtnCkBorQbzFZlYjvBBV8uAYUCKniqv4SzOx6UQ3+5CjhcI26Pj4IglZbVxklMqI2fztdOgYay3aXeEQY0M/1LQg49+oGDpgwNL0HUtGQ753awzEX1R2ULasx7GFEZqtgBpzaWsJExBP1ubeADmuJXXkM5Sd3ReBRVVwOqiz5Xk9RKGxjNYD011Q78QVra+CLCE7WkVCLEqs+0nbCY2UhxTWyMnOsLNJKk50rZCjO3EPuMmAXP58G+GoT2LccMGvIREd9SNSFXnex6n6o+YjZHCuaS/+xxcMiS2BzMK8HROjQgXO6pVG/qSqiOEQWsPEG8lT7WMywNU7XbPV1DZ3dLW2NlWb1HhnGGAz+kIzlzpDfyKQNcalpfuBsxn5mg6CYq8c0NYdl5fZz1jv3fnRLABrcRpjHbjFdkl80m7Up4pK+aTSRKAjeHAc6UON00ydnKR/q5HmNubHC75chJtdnKWkj/254L60XcEOkNSE=
 cache:
   directories:
-    - $HOME/.gradle/caches
-    - $HOME/.m2
+  - $HOME/.gradle/caches
+  - $HOME/.m2
 before_script:
-  - git clone https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
-  - gradle -p /tmp/dummy-api-server bootRepackage
-  - java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar &
-  - echo $! > /tmp/dummy-api-server.pid
-  - sleep 20
+- git clone https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
+- gradle -p /tmp/dummy-api-server bootRepackage
+- java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar &
+- echo $! > /tmp/dummy-api-server.pid
+- sleep 20
 script:
-  - gradle -version
-  - gradle test
-  - gradle acceptanceTest
+- gradle -version
+- gradle test
+- gradle acceptanceTest
 after_success:
-  - test "$TRAVIS_PULL_REQUEST" == "false" && gradle publish --quiet --stacktrace || echo 'Skipping publish due to pull request'
+- test "$TRAVIS_PULL_REQUEST" == "false" && gradle publish --quiet --stacktrace ||
+  echo 'Skipping publish due to pull request'
 after_script:
-  - kill $(cat /tmp/dummy-api-server.pid)
+- kill $(cat /tmp/dummy-api-server.pid)
