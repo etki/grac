@@ -14,7 +14,8 @@ repositories {
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        // forcing publication to be last so pom.xml would contain dependencies
+        mavenZJava(MavenPublication) {
             from components.java
         }
         mavenSources(MavenPublication) {
