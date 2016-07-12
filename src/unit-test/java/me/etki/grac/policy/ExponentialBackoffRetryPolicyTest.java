@@ -41,8 +41,8 @@ public class ExponentialBackoffRetryPolicyTest {
         double randomFactor = 0.5;
         range = new TimeRange(minimum, maximum, randomFactor);
         long value = new ExponentialBackoffRetryPolicy(range).calculateDelay(attempt);
-        assertTrue(value < (long) (expected * (1.0 + randomFactor)));
-        assertTrue(value > (long) (expected * (1.0 - randomFactor)));
+        assertTrue(value <= (long) (expected * (1.0 + randomFactor)));
+        assertTrue(value >= (long) (expected * (1.0 - randomFactor)));
     }
 
     @Test

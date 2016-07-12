@@ -38,8 +38,8 @@ public class LinearBackoffRetryPolicyTest {
         double randomFactor = 0.2;
         range = new TimeRange(minimum, maximum, randomFactor);
         long value = new LinearBackoffRetryPolicy(range, maximumAttempts).calculateDelay(attempt);
-        assertTrue(value > expected * (1.0 - randomFactor));
-        assertTrue(value < expected * (1.0 + randomFactor));
+        assertTrue(value >= expected * (1.0 - randomFactor));
+        assertTrue(value <= expected * (1.0 + randomFactor));
     }
 
     @Test
