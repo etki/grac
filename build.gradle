@@ -92,6 +92,8 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
         runtimeClasspath += sourceSets.main.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.testInfrastructure.runtimeClasspath
+
+        System.properties.entrySet().forEach({ e -> systemProperties[e.key] = e.value })
     }
 
     tasks.create([name: testType + 'Test', type: Test], {
