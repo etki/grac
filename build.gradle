@@ -4,7 +4,8 @@ version '0.1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenLocal()
@@ -38,24 +39,6 @@ publishing {
             }
         }
     }
-}
-
-sourceSets {
-    testInfrastructure {
-        java {
-            srcDir 'src/test-infrastructure/test'
-        }
-    }
-}
-
-ext {
-    asyncHttpClientVersion = '2.+'
-    logbackVersion = '1.1+'
-    jacksonVersion = '2.7+'
-    junitVersion = '4.1+'
-    junitParamsVersion = '1.+'
-    guavaVersion = '19.+'
-    mockitoVersion = '1.10+'
 }
 
 dependencies {
