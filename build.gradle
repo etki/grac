@@ -92,14 +92,14 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
         runtimeClasspath += sourceSets.main.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.testInfrastructure.runtimeClasspath
-
-        System.properties.entrySet().forEach({ e -> systemProperties[e.key] = e.value })
     }
 
     tasks.create([name: testType + 'Test', type: Test], {
         shouldRunAfter testTypeStack.collect { name -> name + 'Test' }
         testClassesDir = sourceSets."${testType}Test".output.classesDir
         classpath = sourceSets."${testType}Test".runtimeClasspath
+
+        System.properties.entrySet().forEach({ e -> systemProperties[e.key] = e.value })
     })
 
     testTypeStack.add(testType)
