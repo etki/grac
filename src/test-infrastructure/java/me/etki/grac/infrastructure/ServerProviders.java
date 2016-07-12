@@ -32,7 +32,9 @@ public class ServerProviders {
     }
 
     public static ServerProvider dummyApiServer() {
-        return of(Servers.localHttp(8080));
+        // todo
+        int port = Integer.valueOf(System.getProperty("dummyServer.port", "8080"));
+        return of(Servers.localHttp(port));
     }
 
     public static ServerProvider github() {
