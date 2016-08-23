@@ -18,4 +18,6 @@ public class Routing {
     public static final String JSON_PROBLEM_RESOURCE = "/api/error/";
 
     public static final String USERS_RESOURCE = "/api/structure/user";
+
+    public static final String PAYLOAD_MIRROR_RESOURCE = "/api/payload/mirror";
 }
