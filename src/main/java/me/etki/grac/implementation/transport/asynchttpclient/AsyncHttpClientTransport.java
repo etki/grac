@@ -88,6 +88,12 @@ public class AsyncHttpClientTransport implements Transport {
                 .setHeaders(convertMetadata(request.getMetadata()))
                 .setUri(uri)
                 .setRequestTimeout(request.getTimeout().intValue());
+        if (request.getPayload().isPresent()) {
+            //noinspection OptionalGetWithoutIsPresent
+            requestBuilder.setBody(request.getPayload().get().getContent());
+            //noinspection OptionalGetWithoutIsPresent
+            requestBuilder.addHeader("Content-Type", request.getPayload().get().getMimeType().toString());
+        }
         if (!request.getAcceptedMimeTypes().isEmpty()) {
             requestBuilder.addHeader("Accept", assembleAcceptsHeader(request.getAcceptedMimeTypes()));
         }

@@ -15,12 +15,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.isA;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -112,6 +116,20 @@ public class DummyApiServerIntegrationTest {
         Response<User> response = builder().build().<User>read(Routing.NULL_RESOURCE, USER_TYPE).get();
         assertFalse(response.getResult().isPresent());
         assertFalse(response.getAltResult().isPresent());
+    }
+
+    @Test
+    public void shouldCorrectlyPassRequestPayload() throws Exception {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("alpha", 1);
+        payload.put("beta", Arrays.asList(2, 2));
+        payload.put("gamma", new HashMap<String, String>() {{ put("orly?", "yarly"); }});
+        Response<Object> response = builder()
+                .build()
+                .set(Routing.PAYLOAD_MIRROR_RESOURCE, payload, new TypeSpec(Object.class))
+                .get();
+        assertTrue(response.getResult().isPresent());
+        assertEquals(payload, response.getResult().get());
     }
 
     private static ClientBuilder builder() {
