@@ -78,9 +78,9 @@ public interface Client {
 
 
     default <O> CompletableFuture<Response<O>> delete(String resource, TypeSpec expectedType, RequestOptions options) {
-        return execute(new Request<>(resource, Action.READ), expectedType, options);
+        return execute(new Request<>(resource, Action.DELETE), expectedType, options);
     }
     default <O> CompletableFuture<Response<O>> delete(String resource, TypeSpec expectedType) {
-        return execute(new Request<>(resource, Action.READ), expectedType, getDefaultRequestOptions());
+        return execute(new Request<>(resource, Action.DELETE), expectedType, getDefaultRequestOptions());
     }
 }
