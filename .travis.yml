@@ -12,9 +12,15 @@ before_script:
 - echo $! > /tmp/dummy-api-server.pid
 - sleep 20
 script:
+- echo "TRAVIS_TAG = $TRAVIS_TAG"
+- echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
 - gradle -version
-- if [ ! -z "$TRAVIS_TAG" ] && [ "TRAVIS_PULL_REQUEST" == "false" ]; then gradle release;
-  else gradle acceptanceTest; fi
+- |
+  if [ ! -z "$TRAVIS_TAG" ] && [ "TRAVIS_PULL_REQUEST" == "false" ]; then
+    gradle release
+  else
+    gradle acceptanceTest
+  fi
 after_script:
 - kill $(cat /tmp/dummy-api-server.pid)
 env:

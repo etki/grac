@@ -89,7 +89,7 @@ task acceptanceTest(dependsOn: [systemTest, integrationTest]) {
 tasks.test.dependsOn(unitTest, functionalTest)
 tasks.stressTest.shouldRunAfter acceptanceTest
 
-tasks.release.dependsOn(acceptanceTest, bintrayUpload)
+task release(dependsOn: [acceptanceTest, bintrayUpload])
 
 publishing {
     publications {
@@ -122,7 +122,7 @@ bintray {
         websiteUrl = 'https://github.com/etki/grac'
         issueTrackerUrl = 'https://github.com/etki/grac/issues'
         githubRepo = 'etki/grac'
-        githubReleaseNotesFile = 'README.md'
+        githubReleaseNotesFile = 'RELEASE.md'
         publicDownloadNumbers = true
 
         version {
