@@ -1,0 +1,22 @@
+language: java
+jdk:
+- oraclejdk8
+cache:
+  directories:
+  - $HOME/.gradle/caches
+  - $HOME/.m2
+before_script:
+- git clone https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
+- gradle -p /tmp/dummy-api-server bootRepackage
+- java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar &
+- echo $! > /tmp/dummy-api-server.pid
+- sleep 20
+script:
+- gradle -version
+- if [ ! -z "$TRAVIS_TAG" ] && [ "TRAVIS_PULL_REQUEST" == "false" ]; then gradle release;
+  else gradle acceptanceTest; fi
+after_script:
+- kill $(cat /tmp/dummy-api-server.pid)
+env:
+  global:
+    secure: WGQItepihyokxKB2V0H/sIJDJj3h/ufqPH4x6MfI1yJ04mPqh1yFTgZMeJiO65F7isWi5StqeGEU7GxNgvWNpfdVbMP9TBLm0hM+QkSugJWtoTVsPb56ZXCuuqCFH0ZGwLBKjDJ6Ab9afu5+GUVazrAfNXWTlg/aS0EByPdTNat8y44setWDeUE4XfGx3YTJKDLU0VGYxRXODLXgC6R1ZJA3nyGd/v+SEO3jD2E0i49+rKE2lf0IQ0Y7FgbQ/KOnb8sYvZsOn6KO8JLNvh2+cInly0jeTBCdTGva6SYMnRAG8cMDOFup1rYaN0pouamO3czyIrNKeNxtj18zdwfBi1T9z4kxxLsC3nmgyHgMesq2xYdBJlkLCr7W0itSVvzTDaFAUHjxi7/y4E7kUL5laEmHU14l1jF6lEi2jOO/9O+DylhS0LS5ZRsdNo90Obh+fWCYzG4yrk2wT8FSDVf4YhvGWKEvQ4/ky4wq4JdGxlCCCcjexHdVuoghU6wjamTNh51D3DEyorFmOSTPprtvYRxW4+iZJZPOXoqmEcu6XrIRfdgAkUm7NdwiuFkRvM98ay2ZhvBCgvJkNmToFLa4ChMHloeeB0b+61axWENAneSzpuUbqaG6u3k81R6HbJ07DBn8ptSC8W6tj1iYZZpgobPF7LBdGc23rMbVmrV9Pp4=

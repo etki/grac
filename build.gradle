@@ -1,5 +1,11 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7'
+}
+
 group 'me.etki'
-version '0.1.2-SNAPSHOT'
+version '0.1.2'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -10,36 +16,6 @@ targetCompatibility = JavaVersion.VERSION_1_8
 repositories {
     mavenLocal()
     mavenCentral()
-}
-
-publishing {
-    publications {
-        // forcing publication to be last so pom.xml would contain dependencies
-        mavenZJava(MavenPublication) {
-            from components.java
-        }
-        mavenSources(MavenPublication) {
-            artifact sourcesJar
-        }
-        mavenJavadoc(MavenPublication) {
-            artifact javadocJar
-        }
-    }
-    repositories {
-        if (System.getenv('GRAC_PRIVATE_REPOSITORY_URL') != null &&
-                System.getenv('GRAC_PRIVATE_REPOSITORY_LOGIN') != null &&
-                System.getenv('GRAC_PRIVATE_REPOSITORY_PASSWORD') != null) {
-
-            System.out.println('Setting up custom repository')
-            maven {
-                url System.getenv('GRAC_PRIVATE_REPOSITORY_URL')
-                credentials {
-                    username = System.getenv('GRAC_PRIVATE_REPOSITORY_LOGIN')
-                    password = System.getenv('GRAC_PRIVATE_REPOSITORY_PASSWORD')
-                }
-            }
-        }
-    }
 }
 
 dependencies {
@@ -109,5 +85,50 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 task acceptanceTest(dependsOn: [systemTest, integrationTest]) {
     shouldRunAfter test
 }
+
 tasks.test.dependsOn(unitTest, functionalTest)
 tasks.stressTest.shouldRunAfter acceptanceTest
+
+tasks.release.dependsOn(acceptanceTest, bintrayUpload)
+
+publishing {
+    publications {
+        // forcing publication to be last so pom.xml would contain dependencies
+        mavenZJava(MavenPublication) {
+            from components.java
+        }
+        mavenSources(MavenPublication) {
+            artifact sourcesJar
+        }
+        mavenJavadoc(MavenPublication) {
+            artifact javadocJar
+        }
+    }
+}
+
+bintray {
+    user = 'etki'
+    key = System.getenv('BINTRAY_API_KEY')
+    publications = ['mavenJavadoc', 'mavenSources', 'mavenZJava']
+
+    override = true
+
+    pkg {
+        repo = 'maven'
+        name = project.name
+        licenses = ['MIT']
+        labels = ['api-client']
+        vcsUrl = 'https://github.com/etki/grac.git'
+        websiteUrl = 'https://github.com/etki/grac'
+        issueTrackerUrl = 'https://github.com/etki/grac/issues'
+        githubRepo = 'etki/grac'
+        githubReleaseNotesFile = 'README.md'
+        publicDownloadNumbers = true
+
+        version {
+            name = project.version
+            desc = 'Generic REST API client'
+            vcsTag = project.version
+        }
+    }
+}
