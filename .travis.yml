@@ -16,7 +16,7 @@ before_script:
 - sleep 20
 script:
 - |
-  if [ ! -z "$TRAVIS_TAG" ] && [ "TRAVIS_PULL_REQUEST" == "false" ]; then
+  if [ ! -z "$TRAVIS_TAG" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     echo "Releasing version $TRAVIS_TAG"
     gradle release
   else
