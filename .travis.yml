@@ -6,19 +6,21 @@ cache:
   - $HOME/.gradle/caches
   - $HOME/.m2
 before_script:
+- echo "TRAVIS_TAG = $TRAVIS_TAG"
+- echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
+- gradle -version
 - git clone https://github.com/etki/dummy-api-server.git /tmp/dummy-api-server
 - gradle -p /tmp/dummy-api-server bootRepackage
 - java -jar /tmp/dummy-api-server/build/libs/dummy-api-server*.jar &
 - echo $! > /tmp/dummy-api-server.pid
 - sleep 20
 script:
-- echo "TRAVIS_TAG = $TRAVIS_TAG"
-- echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
-- gradle -version
 - |
   if [ ! -z "$TRAVIS_TAG" ] && [ "TRAVIS_PULL_REQUEST" == "false" ]; then
+    echo "Releasing version $TRAVIS_TAG"
     gradle release
   else
+    echo "Running snapshot verification"
     gradle acceptanceTest
   fi
 after_script:
