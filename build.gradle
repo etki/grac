@@ -111,8 +111,6 @@ bintray {
     key = System.getenv('BINTRAY_API_KEY')
     publications = ['mavenJavadoc', 'mavenSources', 'mavenZJava']
 
-    override = true
-
     pkg {
         repo = 'maven'
         name = project.name
